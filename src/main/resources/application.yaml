@@ -1,0 +1,9 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb + srv ://<username>:<pwd>@<cluster>.mongodb.net/<dbname>
+
+example:
+  url: "some/url"
+  read-timeout: 1000ms
+  connect-timeout: 1000ms

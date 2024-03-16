@@ -1,0 +1,4 @@
+example:
+  url: "some/url"
+  read-timeout: 1000ms
+  connect-timeout: 1000ms
