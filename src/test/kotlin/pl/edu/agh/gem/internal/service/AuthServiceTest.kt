@@ -2,6 +2,7 @@ package pl.edu.agh.gem.internal.service
 
 import io.kotest.assertions.throwables.shouldThrowExactly
 import io.kotest.core.spec.style.ShouldSpec
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldHaveLength
 import io.kotest.matchers.string.shouldMatch
 import org.mockito.kotlin.mock
@@ -13,6 +14,7 @@ import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
 import pl.edu.agh.gem.util.createNotVerifiedUser
+import pl.edu.agh.gem.util.createVerifiedUser
 
 class AuthServiceTest : ShouldSpec(
     {
@@ -67,6 +69,32 @@ class AuthServiceTest : ShouldSpec(
             }
             verify(notVerifiedUserRepository, times(1)).existByEmail(notVerifiedUser.email)
             verify(verifiedUserRepository, times(1)).existByEmail(notVerifiedUser.email)
+        }
+
+        should("get verified user") {
+            // given
+            val email = "email@email.com"
+            val verifiedUser = createVerifiedUser(email = email)
+            whenever(verifiedUserRepository.findByEmail(email)).thenReturn(verifiedUser)
+
+            // when
+            val result = authService.getVerifiedUser(email)
+
+            // then
+            result shouldBe verifiedUser
+            verify(verifiedUserRepository, times(1)).findByEmail(email)
+        }
+
+        should("throw UserNotVerifiedException when getting verified user and user is not present") {
+            // given
+            val email = "email@email.com"
+            whenever(verifiedUserRepository.findByEmail(email)).thenReturn(null)
+
+            // when then
+            shouldThrowExactly<UserNotVerifiedException> {
+                authService.getVerifiedUser(email)
+            }
+            verify(verifiedUserRepository, times(1)).findByEmail(email)
         }
 
         should("generate code") {

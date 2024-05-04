@@ -3,6 +3,7 @@ package pl.edu.agh.gem.internal.service
 import org.springframework.stereotype.Service
 import pl.edu.agh.gem.internal.client.EmailSenderClient
 import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
+import pl.edu.agh.gem.internal.model.auth.VerifiedUser
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
@@ -35,6 +36,10 @@ class AuthService(
             .collect(Collectors.joining(""))
     }
 
+    fun getVerifiedUser(email: String): VerifiedUser {
+        return verifiedUserRepository.findByEmail(email) ?: throw UserNotVerifiedException()
+    }
+
     companion object {
         private const val CODE_LENGTH = 6L
         private const val RANDOM_NUMBER_BOUND = 10
@@ -42,3 +47,4 @@ class AuthService(
 }
 
 class DuplicateEmailException(email: String) : RuntimeException("Email address $email is already taken")
+class UserNotVerifiedException : RuntimeException("User is not verified")

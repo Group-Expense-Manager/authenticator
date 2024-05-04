@@ -15,6 +15,9 @@ resilience4j.retry:
         - java.io.IOException
       ignoreExceptions: []
 
+token:
+  expiration: P90D # 3 months
+  secret-key: 8692tg18dEq2twmv48AtiKWp3Qo/2nw6/tU6Rzttm9Q=
 
 email-sender-client:
   url: "some/url"
