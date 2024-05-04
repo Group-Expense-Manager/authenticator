@@ -14,3 +14,9 @@ resilience4j.retry:
         - org.springframework.web.client.HttpServerErrorException
         - java.io.IOException
       ignoreExceptions: []
+
+
+email-sender-client:
+  url: "some/url"
+  read-timeout: 1000ms
+  connect-timeout: 1000ms
