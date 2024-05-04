@@ -99,6 +99,32 @@ class AuthServiceTest : ShouldSpec(
             verify(verifiedUserRepository, times(1)).findByEmail(email)
         }
 
+        should("get verified user") {
+            // given
+            val email = "email@email.com"
+            val verifiedUser = createVerifiedUser(email = email)
+            whenever(verifiedUserRepository.findByEmail(email)).thenReturn(verifiedUser)
+
+            // when
+            val result = authService.getVerifiedUser(email)
+
+            // then
+            result shouldBe verifiedUser
+            verify(verifiedUserRepository, times(1)).findByEmail(email)
+        }
+
+        should("throw UserNotVerifiedException when getting verified user and user is not present") {
+            // given
+            val email = "email@email.com"
+            whenever(verifiedUserRepository.findByEmail(email)).thenReturn(null)
+
+            // when then
+            shouldThrowExactly<UserNotVerifiedException> {
+                authService.getVerifiedUser(email)
+            }
+            verify(verifiedUserRepository, times(1)).findByEmail(email)
+        }
+
         should("generate code") {
             // given when
             val code = authService.generateCode()
