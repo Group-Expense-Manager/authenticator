@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus.CREATED
 import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.HttpStatus.OK
+import org.springframework.http.HttpStatus.TOO_MANY_REQUESTS
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.crypto.password.PasswordEncoder
 import pl.edu.agh.gem.assertion.shouldHaveErrors
@@ -39,9 +40,11 @@ import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_CODE
 import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_PASSWORD
 import pl.edu.agh.gem.util.createLoginRequest
 import pl.edu.agh.gem.util.createRegistrationRequest
+import pl.edu.agh.gem.util.createVerificationEmailRequest
 import pl.edu.agh.gem.util.createVerificationRequest
 import pl.edu.agh.gem.util.saveNotVerifiedUser
 import pl.edu.agh.gem.util.saveVerifiedUser
+import java.time.LocalDateTime
 
 class AuthControllerIT(
     private val service: ServiceTestClient,
@@ -264,6 +267,70 @@ class AuthControllerIT(
         response shouldHaveHttpStatus BAD_REQUEST
         response shouldHaveErrors {
             errors.first().code shouldBe VerificationException::class.simpleName
+        }
+    }
+    should("send verification email") {
+        // given
+        val email = "email@email.com"
+        saveNotVerifiedUser(
+            email = email,
+            updatedCodeAt = LocalDateTime.now().minusMinutes(10),
+            notVerifiedUserRepository = notVerifiedUserRepository,
+        )
+        stubEmailSenderVerification()
+        val verificationEmailRequest = createVerificationEmailRequest(email)
+
+        // when
+        val response = service.sendVerificationEmail(verificationEmailRequest)
+
+        // then
+        response shouldHaveHttpStatus OK
+    }
+
+    should("return validation exception when email is blank") {
+        // given
+        val email = ""
+        saveNotVerifiedUser(
+            email = email,
+            updatedCodeAt = LocalDateTime.now().minusMinutes(10),
+            notVerifiedUserRepository = notVerifiedUserRepository,
+        )
+        val verificationEmailRequest = createVerificationEmailRequest(email)
+
+        // when
+        val response = service.sendVerificationEmail(verificationEmailRequest)
+
+        // then
+        response shouldHaveHttpStatus BAD_REQUEST
+        response shouldHaveValidationError "Email can not be blank"
+    }
+
+    should("return UserNotFoundException when sending verification and user does not exist") {
+        // given  when
+        val verificationEmailRequest = createVerificationEmailRequest()
+        val response = service.sendVerificationEmail(verificationEmailRequest)
+
+        // then
+        response shouldHaveHttpStatus NOT_FOUND
+        response shouldHaveErrors {
+            errors[0].code shouldBe "UserNotFoundException"
+        }
+    }
+
+    should("return EmailRecentlySentException when mail was recently sent") {
+        // given
+        val email = "email@email.com"
+        saveNotVerifiedUser(email = email, notVerifiedUserRepository = notVerifiedUserRepository)
+        stubEmailSenderVerification()
+        val verificationEmailRequest = createVerificationEmailRequest(email)
+
+        // when
+        val response = service.sendVerificationEmail(verificationEmailRequest)
+
+        // then
+        response shouldHaveHttpStatus TOO_MANY_REQUESTS
+        response shouldHaveErrors {
+            errors[0].code shouldBe "EmailRecentlySentException"
         }
     }
 },)

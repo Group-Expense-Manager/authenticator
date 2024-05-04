@@ -10,6 +10,7 @@ import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
 import java.security.SecureRandom
+import java.time.LocalDateTime
 import java.util.stream.Collectors
 
 @Service
@@ -53,7 +54,19 @@ class AuthService(
         return verifiedUserRepository.create(notVerifiedUser.toVerified())
     }
 
+    fun sendVerificationEmail(email: String) {
+        val notVerifiedUser = notVerifiedUserRepository.findByEmail(email) ?: throw UserNotFoundException()
+
+        if (notVerifiedUser.codeUpdatedAt.isAfter(LocalDateTime.now().minusMinutes(TIME_BETWEEN_EMAILS_IN_MINUTES))) {
+            throw EmailRecentlySentException()
+        }
+        val newCode = generateCode()
+        senderClient.sendVerificationEmail(VerificationEmailDetails(notVerifiedUser.email, newCode))
+        notVerifiedUserRepository.updateVerificationCode(notVerifiedUser.id, newCode)
+    }
+
     companion object {
+        private const val TIME_BETWEEN_EMAILS_IN_MINUTES = 5L
         private const val CODE_LENGTH = 6L
         private const val RANDOM_NUMBER_BOUND = 10
     }
@@ -70,3 +83,4 @@ class DuplicateEmailException(email: String) : RuntimeException("Email address $
 class UserNotVerifiedException : RuntimeException("User is not verified")
 class UserNotFoundException : RuntimeException("User not found")
 class VerificationException(email: String) : RuntimeException("Verification failed for $email")
+class EmailRecentlySentException : RuntimeException("Email was recently sent, please wait 5 minutes")

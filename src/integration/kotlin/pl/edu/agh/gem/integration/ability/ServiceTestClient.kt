@@ -7,6 +7,7 @@ import org.springframework.test.web.servlet.client.MockMvcWebTestClient.bindToAp
 import org.springframework.web.context.WebApplicationContext
 import pl.edu.agh.gem.external.dto.auth.LoginRequest
 import pl.edu.agh.gem.external.dto.auth.RegistrationRequest
+import pl.edu.agh.gem.external.dto.auth.VerificationEmailRequest
 import pl.edu.agh.gem.external.dto.auth.VerificationRequest
 import pl.edu.agh.gem.headers.HeadersUtils.withAppContentType
 import java.net.URI
@@ -37,6 +38,14 @@ class ServiceTestClient(applicationContext: WebApplicationContext) {
     fun verify(body: VerificationRequest): ResponseSpec {
         return webClient.post()
             .uri(URI("/open/verify"))
+            .headers { it.withAppContentType() }
+            .bodyValue(body)
+            .exchange()
+    }
+
+    fun sendVerificationEmail(body: VerificationEmailRequest): ResponseSpec {
+        return webClient.post()
+            .uri(URI("/open/send-verification-email"))
             .headers { it.withAppContentType() }
             .bodyValue(body)
             .exchange()

@@ -2,6 +2,7 @@ package pl.edu.agh.gem.util
 
 import pl.edu.agh.gem.external.dto.auth.LoginRequest
 import pl.edu.agh.gem.external.dto.auth.RegistrationRequest
+import pl.edu.agh.gem.external.dto.auth.VerificationEmailRequest
 import pl.edu.agh.gem.external.dto.auth.VerificationRequest
 import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
 import pl.edu.agh.gem.internal.model.auth.Verification
@@ -108,6 +109,12 @@ fun createVerification(
 ) = Verification(
     email = email,
     code = code,
+)
+
+fun createVerificationEmailRequest(
+    email: String = "my@mail.com",
+) = VerificationEmailRequest(
+    email = email,
 )
 
 object DummyData {
