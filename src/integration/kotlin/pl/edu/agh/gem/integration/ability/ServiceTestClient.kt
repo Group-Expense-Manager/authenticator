@@ -7,6 +7,7 @@ import org.springframework.test.web.servlet.client.MockMvcWebTestClient.bindToAp
 import org.springframework.web.context.WebApplicationContext
 import pl.edu.agh.gem.external.dto.auth.LoginRequest
 import pl.edu.agh.gem.external.dto.auth.RegistrationRequest
+import pl.edu.agh.gem.external.dto.auth.VerificationRequest
 import pl.edu.agh.gem.headers.HeadersUtils.withAppContentType
 import java.net.URI
 
@@ -28,6 +29,14 @@ class ServiceTestClient(applicationContext: WebApplicationContext) {
     fun login(body: LoginRequest): ResponseSpec {
         return webClient.post()
             .uri(URI("/open/login"))
+            .headers { it.withAppContentType() }
+            .bodyValue(body)
+            .exchange()
+    }
+
+    fun verify(body: VerificationRequest): ResponseSpec {
+        return webClient.post()
+            .uri(URI("/open/verify"))
             .headers { it.withAppContentType() }
             .bodyValue(body)
             .exchange()

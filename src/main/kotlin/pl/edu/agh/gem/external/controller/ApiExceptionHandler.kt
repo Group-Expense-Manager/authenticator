@@ -6,6 +6,7 @@ import org.springframework.core.annotation.Order
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.HttpStatus.FORBIDDEN
+import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -19,7 +20,9 @@ import pl.edu.agh.gem.error.withDetails
 import pl.edu.agh.gem.error.withMessage
 import pl.edu.agh.gem.error.withUserMessage
 import pl.edu.agh.gem.internal.service.DuplicateEmailException
+import pl.edu.agh.gem.internal.service.UserNotFoundException
 import pl.edu.agh.gem.internal.service.UserNotVerifiedException
+import pl.edu.agh.gem.internal.service.VerificationException
 
 @ControllerAdvice
 @Order(LOWEST_PRECEDENCE)
@@ -38,6 +41,16 @@ class ApiExceptionHandler {
     @ExceptionHandler(UserNotVerifiedException::class)
     fun handleUserNotVerifiedException(exception: UserNotVerifiedException): ResponseEntity<SimpleErrorsHolder> {
         return ResponseEntity(handleError(exception), FORBIDDEN)
+    }
+
+    @ExceptionHandler(UserNotFoundException::class)
+    fun handleUserNotFoundException(exception: UserNotFoundException): ResponseEntity<SimpleErrorsHolder> {
+        return ResponseEntity(handleError(exception), NOT_FOUND)
+    }
+
+    @ExceptionHandler(VerificationException::class)
+    fun handleVerificationException(exception: VerificationException): ResponseEntity<SimpleErrorsHolder> {
+        return ResponseEntity(handleError(exception), BAD_REQUEST)
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)

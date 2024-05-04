@@ -5,15 +5,18 @@ import io.kotest.core.spec.style.ShouldSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldHaveLength
 import io.kotest.matchers.string.shouldMatch
+import org.mockito.kotlin.anyVararg
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import pl.edu.agh.gem.internal.client.EmailSenderClient
+import pl.edu.agh.gem.internal.model.auth.VerifiedUser
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
 import pl.edu.agh.gem.util.createNotVerifiedUser
+import pl.edu.agh.gem.util.createVerification
 import pl.edu.agh.gem.util.createVerifiedUser
 
 class AuthServiceTest : ShouldSpec(
@@ -99,30 +102,47 @@ class AuthServiceTest : ShouldSpec(
             verify(verifiedUserRepository, times(1)).findByEmail(email)
         }
 
-        should("get verified user") {
+        should("verify user") {
             // given
             val email = "email@email.com"
-            val verifiedUser = createVerifiedUser(email = email)
-            whenever(verifiedUserRepository.findByEmail(email)).thenReturn(verifiedUser)
+            val code = "123455"
+            val verification = createVerification(email, code)
+            val notVerifiedUser = createNotVerifiedUser(email = email, code = code)
+            whenever(notVerifiedUserRepository.findByEmail(verification.email)).thenReturn(notVerifiedUser)
 
             // when
-            val result = authService.getVerifiedUser(email)
+            authService.verify(verification)
 
             // then
-            result shouldBe verifiedUser
-            verify(verifiedUserRepository, times(1)).findByEmail(email)
+            verify(notVerifiedUserRepository, times(1)).findByEmail(email)
+            verify(notVerifiedUserRepository, times(1)).delete(notVerifiedUser)
+            verify(verifiedUserRepository, times(1)).create(anyVararg(VerifiedUser::class))
         }
 
-        should("throw UserNotVerifiedException when getting verified user and user is not present") {
+        should("throw UserNotFoundException when verifying user and user does not exist") {
             // given
             val email = "email@email.com"
-            whenever(verifiedUserRepository.findByEmail(email)).thenReturn(null)
+            val code = "123456"
+            val verification = createVerification(email, code)
+            whenever(notVerifiedUserRepository.findByEmail(email)).thenReturn(null)
 
             // when then
-            shouldThrowExactly<UserNotVerifiedException> {
-                authService.getVerifiedUser(email)
-            }
-            verify(verifiedUserRepository, times(1)).findByEmail(email)
+            shouldThrowExactly<UserNotFoundException> { authService.verify(verification) }
+            verify(notVerifiedUserRepository, times(1)).findByEmail(email)
+        }
+
+        should("throw VerificationException when verifying user and code is not correct") {
+            // given
+            val email = "email@email.com"
+            val wrongCode = "123456"
+            val correctCode = "654321"
+            val verification = createVerification(email, wrongCode)
+            val notVerifiedUser = createNotVerifiedUser(email = email, code = correctCode)
+            whenever(notVerifiedUserRepository.findByEmail(email)).thenReturn(notVerifiedUser)
+
+            // when then
+            shouldThrowExactly<VerificationException> { authService.verify(verification) }
+            verify(notVerifiedUserRepository, times(1)).findByEmail(email)
         }
 
         should("generate code") {

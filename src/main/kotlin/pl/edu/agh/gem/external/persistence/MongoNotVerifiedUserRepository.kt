@@ -20,6 +20,10 @@ class MongoNotVerifiedUserRepository(
         return mongo.findOne(query, NotVerifiedUserEntity::class.java)?.toDomain()
     }
 
+    override fun delete(notVerifiedUser: NotVerifiedUser) {
+        mongo.remove(notVerifiedUser.toEntity())
+    }
+
     private fun NotVerifiedUser.toEntity() =
         NotVerifiedUserEntity(
             id = id,

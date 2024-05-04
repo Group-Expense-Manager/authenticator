@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.HttpStatus.CREATED
 import org.springframework.http.HttpStatus.FORBIDDEN
+import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.HttpStatus.OK
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -30,6 +31,7 @@ import pl.edu.agh.gem.internal.service.DuplicateEmailException
 import pl.edu.agh.gem.internal.service.UserNotVerifiedException
 import pl.edu.agh.gem.util.createLoginRequest
 import pl.edu.agh.gem.util.createRegistrationRequest
+import pl.edu.agh.gem.util.createVerificationRequest
 import pl.edu.agh.gem.util.saveNotVerifiedUser
 import pl.edu.agh.gem.util.saveVerifiedUser
 
@@ -192,6 +194,63 @@ class AuthControllerIT(
         response shouldHaveHttpStatus BAD_REQUEST
         response shouldHaveErrors {
             errors.first().code shouldBe BadCredentialsException::class.simpleName
+        }
+    }
+
+    should("Verify code") {
+        // given
+        val email = "email@email.com"
+        val notVerifiedUser = saveNotVerifiedUser(email = email, notVerifiedUserRepository = notVerifiedUserRepository)
+        val verificationRequest = createVerificationRequest(email = email, code = notVerifiedUser.code)
+
+        // when
+        val response = service.verify(verificationRequest)
+
+        // then
+        response shouldHaveHttpStatus OK
+    }
+
+    should("return validation exception when code is blank") {
+        // given
+        val verificationRequest = createVerificationRequest(code = "")
+
+        // when
+        val response = service.verify(verificationRequest)
+
+        // then
+        response shouldHaveHttpStatus BAD_REQUEST
+        response shouldHaveValidationError "Code can not be blank"
+    }
+
+    should("return UserNotFoundException when verifying user do not exist") {
+        // given
+        val verificationRequest = createVerificationRequest()
+
+        // when
+        val response = service.verify(verificationRequest)
+
+        // then
+        response shouldHaveHttpStatus NOT_FOUND
+        response shouldHaveErrors {
+            errors[0].code shouldBe "UserNotFoundException"
+        }
+    }
+
+    should("return VerificationException when verifying and code is invalid") {
+        // given
+        val email = "email@email.com"
+        val correctCode = "123456"
+        val wrongCode = "654321"
+        saveNotVerifiedUser(email = email, code = correctCode, notVerifiedUserRepository = notVerifiedUserRepository)
+        val verificationRequest = createVerificationRequest(email = email, code = wrongCode)
+
+        // when
+        val response = service.verify(verificationRequest)
+
+        // then
+        response shouldHaveHttpStatus BAD_REQUEST
+        response shouldHaveErrors {
+            errors[0].code shouldBe "VerificationException"
         }
     }
 },)
