@@ -2,11 +2,6 @@ wiremock:
   server:
     port: 9999
 
-example-client:
-  url: http://localhost:${wiremock.server.port}
-  read-timeout: 1000ms
-  connect-timeout: 1000ms
-
 server:
   shutdown: immediate
 
