@@ -26,7 +26,7 @@ class AuthService(
     }
 
     private fun isEmailTaken(email: String) =
-        notVerifiedUserRepository.existByEmail(email) || verifiedUserRepository.existByEmail(email)
+        notVerifiedUserRepository.findByEmail(email) != null || verifiedUserRepository.findByEmail(email) != null
 
     fun generateCode(): String {
         return SecureRandom().ints(0, RANDOM_NUMBER_BOUND)

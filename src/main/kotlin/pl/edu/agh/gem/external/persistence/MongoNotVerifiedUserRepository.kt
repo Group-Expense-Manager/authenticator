@@ -15,13 +15,8 @@ class MongoNotVerifiedUserRepository(
         return mongo.insert(notVerifiedUser.toEntity()).toDomain()
     }
 
-    override fun existByEmail(email: String): Boolean {
-        val query = Query().addCriteria(where(NotVerifiedUserEntity::email.name).`is`(email))
-        return mongo.exists(query, NotVerifiedUserEntity::class.java)
-    }
-
     override fun findByEmail(email: String): NotVerifiedUser? {
-        val query = Query().addCriteria(where("email").`is`(email))
+        val query = Query().addCriteria(where(NotVerifiedUserEntity::email.name).`is`(email))
         return mongo.findOne(query, NotVerifiedUserEntity::class.java)?.toDomain()
     }
 

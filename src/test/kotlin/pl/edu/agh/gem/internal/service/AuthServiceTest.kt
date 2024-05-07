@@ -30,8 +30,8 @@ class AuthServiceTest : ShouldSpec(
         should("create user") {
             // given
             val notVerifiedUser = createNotVerifiedUser()
-            whenever(notVerifiedUserRepository.existByEmail(notVerifiedUser.email)).thenReturn(false)
-            whenever(verifiedUserRepository.existByEmail(notVerifiedUser.email)).thenReturn(false)
+            whenever(notVerifiedUserRepository.findByEmail(notVerifiedUser.email)).thenReturn(null)
+            whenever(verifiedUserRepository.findByEmail(notVerifiedUser.email)).thenReturn(null)
             whenever(notVerifiedUserRepository.create(notVerifiedUser)).thenReturn(notVerifiedUser)
             val emailDetails = VerificationEmailDetails(notVerifiedUser.email, notVerifiedUser.code)
 
@@ -39,8 +39,8 @@ class AuthServiceTest : ShouldSpec(
             authService.create(notVerifiedUser)
 
             // then
-            verify(notVerifiedUserRepository, times(1)).existByEmail(notVerifiedUser.email)
-            verify(verifiedUserRepository, times(1)).existByEmail(notVerifiedUser.email)
+            verify(notVerifiedUserRepository, times(1)).findByEmail(notVerifiedUser.email)
+            verify(verifiedUserRepository, times(1)).findByEmail(notVerifiedUser.email)
             verify(notVerifiedUserRepository, times(1)).create(notVerifiedUser)
             verify(emailSenderClient, times(1)).sendVerificationEmail(emailDetails)
         }
@@ -48,27 +48,29 @@ class AuthServiceTest : ShouldSpec(
         should("throw DuplicateEmailException when creating user and there exists not verified user with given mail") {
             // given
             val notVerifiedUser = createNotVerifiedUser()
-            whenever(notVerifiedUserRepository.existByEmail(notVerifiedUser.email)).thenReturn(true)
+            whenever(notVerifiedUserRepository.findByEmail(notVerifiedUser.email)).thenReturn(notVerifiedUser)
 
             // when then
             shouldThrowExactly<DuplicateEmailException> {
                 authService.create(notVerifiedUser)
             }
-            verify(notVerifiedUserRepository, times(1)).existByEmail(notVerifiedUser.email)
+            verify(notVerifiedUserRepository, times(1)).findByEmail(notVerifiedUser.email)
         }
 
         should("throw DuplicateEmailException when creating user and there exists verified user with given mail") {
             // given
-            val notVerifiedUser = createNotVerifiedUser()
-            whenever(notVerifiedUserRepository.existByEmail(notVerifiedUser.email)).thenReturn(false)
-            whenever(verifiedUserRepository.existByEmail(notVerifiedUser.email)).thenReturn(true)
+            val email = "email@gmail.com"
+            val notVerifiedUser = createNotVerifiedUser(email = email)
+            val verifiedUser = createVerifiedUser(email = email)
+            whenever(notVerifiedUserRepository.findByEmail(email)).thenReturn(null)
+            whenever(verifiedUserRepository.findByEmail(email)).thenReturn(verifiedUser)
 
             // when then
             shouldThrowExactly<DuplicateEmailException> {
                 authService.create(notVerifiedUser)
             }
-            verify(notVerifiedUserRepository, times(1)).existByEmail(notVerifiedUser.email)
-            verify(verifiedUserRepository, times(1)).existByEmail(notVerifiedUser.email)
+            verify(notVerifiedUserRepository, times(1)).findByEmail(email)
+            verify(verifiedUserRepository, times(1)).findByEmail(email)
         }
 
         should("get verified user") {
