@@ -47,9 +47,9 @@ class AuthService(
         val notVerifiedUser = notVerifiedUserRepository.findByEmail(verification.email) ?: throw UserNotFoundException()
 
         if (notVerifiedUser.code != verification.code) {
-            throw VerificationException()
+            throw VerificationException(notVerifiedUser.email)
         }
-        notVerifiedUserRepository.delete(notVerifiedUser)
+        notVerifiedUserRepository.deleteById(notVerifiedUser.id)
         return verifiedUserRepository.create(notVerifiedUser.toVerified())
     }
 
@@ -60,14 +60,13 @@ class AuthService(
 }
 
 private fun NotVerifiedUser.toVerified() =
-        VerifiedUser(
-                id = id,
-                email = email,
-                password = password,
-        )
-
+    VerifiedUser(
+        id = id,
+        email = email,
+        password = password,
+    )
 
 class DuplicateEmailException(email: String) : RuntimeException("Email address $email is already taken")
 class UserNotVerifiedException : RuntimeException("User is not verified")
 class UserNotFoundException : RuntimeException("User not found")
-class VerificationException : RuntimeException("Verification failed")
+class VerificationException(email: String) : RuntimeException("Verification failed for $email")

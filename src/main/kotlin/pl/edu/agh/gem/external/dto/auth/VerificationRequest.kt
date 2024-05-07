@@ -1,12 +1,14 @@
 package pl.edu.agh.gem.external.dto.auth
 
 import jakarta.validation.constraints.NotBlank
+import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.CODE_NOT_BLANK
+import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.EMAIL_NOT_BLANK
 import pl.edu.agh.gem.internal.model.auth.Verification
 
 data class VerificationRequest(
-    @field:NotBlank(message = "Email can not be blank")
+    @field:NotBlank(message = EMAIL_NOT_BLANK)
     val email: String,
-    @field:NotBlank(message = "Code can not be blank")
+    @field:NotBlank(message = CODE_NOT_BLANK)
     val code: String,
 ) {
     fun toDomain() = Verification(

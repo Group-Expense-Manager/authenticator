@@ -109,3 +109,11 @@ fun createVerification(
     email = email,
     code = code,
 )
+
+object DummyData {
+    const val DUMMY_EMAIL = "email@email.com"
+    const val DUMMY_CODE = "123456"
+    const val OTHER_DUMMY_CODE = "654321"
+    const val DUMMY_PASSWORD = "Password123!"
+    const val OTHER_DUMMY_PASSWORD = "Password321!"
+}
