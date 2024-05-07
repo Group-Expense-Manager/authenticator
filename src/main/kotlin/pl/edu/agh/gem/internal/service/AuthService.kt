@@ -17,12 +17,15 @@ class AuthService(
 ) {
 
     fun create(notVerifiedUser: NotVerifiedUser) {
-        if (notVerifiedUserRepository.existByEmail(notVerifiedUser.email) || verifiedUserRepository.existByEmail(notVerifiedUser.email)) {
-            throw DuplicateEmailException()
+        if (isEmailTaken(notVerifiedUser.email)) {
+            throw DuplicateEmailException(notVerifiedUser.email)
         }
         notVerifiedUserRepository.create(notVerifiedUser)
         senderClient.sendVerificationEmail(VerificationEmailDetails(notVerifiedUser.email, notVerifiedUser.code))
     }
+
+    private fun isEmailTaken(email: String) =
+        notVerifiedUserRepository.existByEmail(email) || verifiedUserRepository.existByEmail(email)
 
     fun generateCode(): String {
         return SecureRandom().ints(0, RANDOM_NUMBER_BOUND)
@@ -38,4 +41,4 @@ class AuthService(
     }
 }
 
-class DuplicateEmailException : RuntimeException("Email is already taken")
+class DuplicateEmailException(email: String) : RuntimeException("Email address $email is already taken")

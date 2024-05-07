@@ -5,7 +5,7 @@ import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
-import org.springframework.http.HttpMethod
+import org.springframework.http.HttpMethod.POST
 import org.springframework.stereotype.Component
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.HttpServerErrorException
@@ -30,7 +30,7 @@ class RestEmailSenderClient(
         try {
             restTemplate.exchange(
                 resolveVerificationAddress(),
-                HttpMethod.POST,
+                POST,
                 HttpEntity(VerificationEmailRequest.from(verificationEmailDetails), HttpHeaders().withAppAcceptType().withAppContentType()),
                 Any::class.java,
             )

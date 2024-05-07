@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import pl.edu.agh.gem.error.SimpleError
 import pl.edu.agh.gem.error.SimpleErrorsHolder
-import pl.edu.agh.gem.error.toSimpleErrorHolder
+import pl.edu.agh.gem.error.handleError
 import pl.edu.agh.gem.error.withCode
 import pl.edu.agh.gem.error.withDetails
 import pl.edu.agh.gem.error.withMessage
@@ -46,14 +46,5 @@ class ApiExceptionHandler {
         return SimpleErrorsHolder(errors).apply {
             jacksonObjectMapper().writeValueAsString(this)
         }
-    }
-
-    private fun handleError(exception: Exception): SimpleErrorsHolder {
-        return SimpleError()
-            .withCode(exception.javaClass.simpleName)
-            .withMessage(exception.message)
-            .withDetails(exception.javaClass.simpleName)
-            .withUserMessage(exception.message)
-            .toSimpleErrorHolder()
     }
 }

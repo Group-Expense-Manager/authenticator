@@ -12,7 +12,7 @@ data class NotVerifiedUserEntity(
     val id: String,
     val email: String,
     val password: String,
-    @Indexed(name = "ttl_index", expireAfter = "P30D")
+    @Indexed(expireAfter = "P30D")
     val createdAt: LocalDateTime,
     val code: String,
     val codeUpdatedAt: LocalDateTime,
