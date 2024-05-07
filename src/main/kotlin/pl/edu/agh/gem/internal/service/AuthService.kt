@@ -1,5 +1,6 @@
 package pl.edu.agh.gem.internal.service
 
+import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import pl.edu.agh.gem.internal.client.EmailSenderClient
@@ -10,6 +11,7 @@ import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
 import java.security.SecureRandom
+import java.time.Duration
 import java.time.LocalDateTime
 import java.util.stream.Collectors
 
@@ -18,6 +20,7 @@ class AuthService(
     private val notVerifiedUserRepository: NotVerifiedUserRepository,
     private val verifiedUserRepository: VerifiedUserRepository,
     private val senderClient: EmailSenderClient,
+    private val emailProperties: EmailProperties,
 ) {
 
     fun create(notVerifiedUser: NotVerifiedUser) {
@@ -57,7 +60,7 @@ class AuthService(
     fun sendVerificationEmail(email: String) {
         val notVerifiedUser = notVerifiedUserRepository.findByEmail(email) ?: throw UserNotFoundException()
 
-        if (notVerifiedUser.codeUpdatedAt.isAfter(LocalDateTime.now().minusMinutes(TIME_BETWEEN_EMAILS_IN_MINUTES))) {
+        if (notVerifiedUser.codeUpdatedAt.isAfter(LocalDateTime.now().minus(emailProperties.timeBetweenEmails))) {
             throw EmailRecentlySentException()
         }
         val newCode = generateCode()
@@ -66,7 +69,6 @@ class AuthService(
     }
 
     companion object {
-        private const val TIME_BETWEEN_EMAILS_IN_MINUTES = 5L
         private const val CODE_LENGTH = 6L
         private const val RANDOM_NUMBER_BOUND = 10
     }
@@ -78,6 +80,11 @@ private fun NotVerifiedUser.toVerified() =
         email = email,
         password = password,
     )
+
+@ConfigurationProperties(prefix = "email")
+data class EmailProperties(
+    val timeBetweenEmails: Duration,
+)
 
 class DuplicateEmailException(email: String) : RuntimeException("Email address $email is already taken")
 class UserNotVerifiedException : RuntimeException("User is not verified")

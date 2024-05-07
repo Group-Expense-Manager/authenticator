@@ -30,6 +30,7 @@ import pl.edu.agh.gem.integration.ability.stubEmailSenderVerification
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
 import pl.edu.agh.gem.internal.service.DuplicateEmailException
+import pl.edu.agh.gem.internal.service.EmailRecentlySentException
 import pl.edu.agh.gem.internal.service.UserNotFoundException
 import pl.edu.agh.gem.internal.service.UserNotVerifiedException
 import pl.edu.agh.gem.internal.service.VerificationException
@@ -302,7 +303,7 @@ class AuthControllerIT(
 
         // then
         response shouldHaveHttpStatus BAD_REQUEST
-        response shouldHaveValidationError "Email can not be blank"
+        response shouldHaveValidationError EMAIL_NOT_BLANK
     }
 
     should("return UserNotFoundException when sending verification and user does not exist") {
@@ -313,16 +314,15 @@ class AuthControllerIT(
         // then
         response shouldHaveHttpStatus NOT_FOUND
         response shouldHaveErrors {
-            errors[0].code shouldBe "UserNotFoundException"
+            errors.first().code shouldBe UserNotFoundException::class.simpleName
         }
     }
 
     should("return EmailRecentlySentException when mail was recently sent") {
         // given
-        val email = "email@email.com"
-        saveNotVerifiedUser(email = email, notVerifiedUserRepository = notVerifiedUserRepository)
+        saveNotVerifiedUser(email = DUMMY_EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
         stubEmailSenderVerification()
-        val verificationEmailRequest = createVerificationEmailRequest(email)
+        val verificationEmailRequest = createVerificationEmailRequest(DUMMY_EMAIL)
 
         // when
         val response = service.sendVerificationEmail(verificationEmailRequest)
@@ -330,7 +330,7 @@ class AuthControllerIT(
         // then
         response shouldHaveHttpStatus TOO_MANY_REQUESTS
         response shouldHaveErrors {
-            errors[0].code shouldBe "EmailRecentlySentException"
+            errors.first().code shouldBe EmailRecentlySentException::class.simpleName
         }
     }
 },)

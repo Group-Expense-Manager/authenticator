@@ -21,17 +21,20 @@ import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_CODE
 import pl.edu.agh.gem.util.createNotVerifiedUser
 import pl.edu.agh.gem.util.createVerification
 import pl.edu.agh.gem.util.createVerifiedUser
-import java.time.LocalDateTime
+import java.time.Duration
+import java.time.LocalDateTime.now
 
 class AuthServiceTest : ShouldSpec(
     {
         val notVerifiedUserRepository = mock<NotVerifiedUserRepository>()
         val verifiedUserRepository = mock<VerifiedUserRepository>()
         val emailSenderClient = mock<EmailSenderClient>()
+        val emailProperties = mock<EmailProperties>()
         val authService = AuthService(
             notVerifiedUserRepository,
             verifiedUserRepository,
             emailSenderClient,
+            emailProperties,
         )
 
         should("create user") {
@@ -141,38 +144,37 @@ class AuthServiceTest : ShouldSpec(
 
         should("send verification email") {
             // given
-            val email = "email@email.com"
-            val notVerifiedUser = createNotVerifiedUser(email = email, updatedCodeAt = LocalDateTime.now().minusMinutes(10))
-            whenever(notVerifiedUserRepository.findByEmail(email)).thenReturn(notVerifiedUser)
+            val notVerifiedUser = createNotVerifiedUser(email = DUMMY_EMAIL, updatedCodeAt = now().minusMinutes(10))
+            whenever(notVerifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(notVerifiedUser)
+            whenever(emailProperties.timeBetweenEmails).thenReturn(Duration.ofMinutes(5))
 
             // when
-            authService.sendVerificationEmail(email)
+            authService.sendVerificationEmail(DUMMY_EMAIL)
 
             // then
-            verify(notVerifiedUserRepository, times(1)).findByEmail(email)
+            verify(notVerifiedUserRepository, times(1)).findByEmail(DUMMY_EMAIL)
             verify(notVerifiedUserRepository, times(1)).updateVerificationCode(anyVararg(String::class), anyVararg(String::class))
             verify(emailSenderClient, times(1)).sendVerificationEmail(anyVararg(VerificationEmailDetails::class))
         }
 
         should("throw UserNotFoundException when sending email and user do not exist") {
             // given
-            val email = "email@email.com"
-            whenever(notVerifiedUserRepository.findByEmail(email)).thenReturn(null)
+            whenever(notVerifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(null)
 
             // when then
-            shouldThrowExactly<UserNotFoundException> { authService.sendVerificationEmail(email) }
-            verify(notVerifiedUserRepository, times(1)).findByEmail(email)
+            shouldThrowExactly<UserNotFoundException> { authService.sendVerificationEmail(DUMMY_EMAIL) }
+            verify(notVerifiedUserRepository, times(1)).findByEmail(DUMMY_EMAIL)
         }
 
         should("throw EmailRecentlySentException when sending email and email was recently sent") {
             // given
-            val email = "email@email.com"
-            val notVerifiedUser = createNotVerifiedUser(email = email, updatedCodeAt = LocalDateTime.now().minusMinutes(4))
-            whenever(notVerifiedUserRepository.findByEmail(email)).thenReturn(notVerifiedUser)
+            val notVerifiedUser = createNotVerifiedUser(email = DUMMY_EMAIL, updatedCodeAt = now().minusMinutes(4))
+            whenever(notVerifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(notVerifiedUser)
+            whenever(emailProperties.timeBetweenEmails).thenReturn(Duration.ofMinutes(5))
 
             // then when
-            shouldThrowExactly<EmailRecentlySentException> { authService.sendVerificationEmail(email) }
-            verify(notVerifiedUserRepository, times(1)).findByEmail(email)
+            shouldThrowExactly<EmailRecentlySentException> { authService.sendVerificationEmail(DUMMY_EMAIL) }
+            verify(notVerifiedUserRepository, times(1)).findByEmail(DUMMY_EMAIL)
         }
 
         should("generate code") {
