@@ -60,13 +60,16 @@ class AuthService(
     fun sendVerificationEmail(email: String) {
         val notVerifiedUser = notVerifiedUserRepository.findByEmail(email) ?: throw UserNotFoundException()
 
-        if (notVerifiedUser.codeUpdatedAt.isAfter(LocalDateTime.now().minus(emailProperties.timeBetweenEmails))) {
+        if (!canSendEmail(notVerifiedUser)) {
             throw EmailRecentlySentException()
         }
         val newCode = generateCode()
         senderClient.sendVerificationEmail(VerificationEmailDetails(notVerifiedUser.email, newCode))
         notVerifiedUserRepository.updateVerificationCode(notVerifiedUser.id, newCode)
     }
+
+    private fun canSendEmail(notVerifiedUser: NotVerifiedUser) =
+        notVerifiedUser.codeUpdatedAt.isBefore(LocalDateTime.now().minus(emailProperties.timeBetweenEmails))
 
     companion object {
         private const val CODE_LENGTH = 6L
