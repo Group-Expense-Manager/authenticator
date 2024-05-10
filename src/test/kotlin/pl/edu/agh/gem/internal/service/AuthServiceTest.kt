@@ -56,7 +56,7 @@ class AuthServiceTest : ShouldSpec(
             val notVerifiedUser = createNotVerifiedUser()
             whenever(notVerifiedUserRepository.findByEmail(notVerifiedUser.email)).thenReturn(notVerifiedUser)
 
-            // when then
+            // when & then
             shouldThrowExactly<DuplicateEmailException> {
                 authService.create(notVerifiedUser)
             }
@@ -70,7 +70,7 @@ class AuthServiceTest : ShouldSpec(
             whenever(notVerifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(null)
             whenever(verifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(verifiedUser)
 
-            // when then
+            // when & then
             shouldThrowExactly<DuplicateEmailException> {
                 authService.create(notVerifiedUser)
             }
@@ -95,7 +95,7 @@ class AuthServiceTest : ShouldSpec(
             // given
             whenever(verifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(null)
 
-            // when then
+            // when & then
             shouldThrowExactly<UserNotVerifiedException> {
                 authService.getVerifiedUser(DUMMY_EMAIL)
             }
@@ -122,7 +122,7 @@ class AuthServiceTest : ShouldSpec(
             val verification = createVerification(email = DUMMY_EMAIL)
             whenever(notVerifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(null)
 
-            // when then
+            // when & then
             shouldThrowExactly<UserNotFoundException> { authService.verify(verification) }
             verify(notVerifiedUserRepository, times(1)).findByEmail(DUMMY_EMAIL)
         }
@@ -133,7 +133,7 @@ class AuthServiceTest : ShouldSpec(
             val notVerifiedUser = createNotVerifiedUser(email = DUMMY_EMAIL, code = OTHER_DUMMY_CODE)
             whenever(notVerifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(notVerifiedUser)
 
-            // when then
+            // when & then
             shouldThrowExactly<VerificationException> { authService.verify(verification) }
             verify(notVerifiedUserRepository, times(1)).findByEmail(DUMMY_EMAIL)
         }
