@@ -4,7 +4,7 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
-import java.time.LocalDateTime
+import java.time.Instant
 
 @Document("not-verified")
 data class NotVerifiedUserEntity(
@@ -13,9 +13,9 @@ data class NotVerifiedUserEntity(
     val email: String,
     val password: String,
     @Indexed(expireAfter = "P30D")
-    val createdAt: LocalDateTime,
+    val createdAt: Instant,
     val code: String,
-    val codeUpdatedAt: LocalDateTime,
+    val codeUpdatedAt: Instant,
 ) {
     fun toDomain() =
         NotVerifiedUser(

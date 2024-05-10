@@ -19,7 +19,7 @@ import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
 import pl.edu.agh.gem.internal.service.AuthService
 import pl.edu.agh.gem.media.InternalApiMediaType.APPLICATION_JSON_INTERNAL_VER_1
 import pl.edu.agh.gem.security.JwtService
-import java.time.LocalDateTime
+import java.time.Instant.now
 import java.util.UUID.randomUUID
 
 @RestController
@@ -80,8 +80,8 @@ class AuthController(
             id = randomUUID().toString(),
             email = email,
             password = passwordEncoder.encode(password),
-            createdAt = LocalDateTime.now(),
+            createdAt = now(),
             code = authService.generateCode(),
-            codeUpdatedAt = LocalDateTime.now(),
+            codeUpdatedAt = now(),
         )
 }

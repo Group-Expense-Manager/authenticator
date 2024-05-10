@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Repository
 import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
-import java.time.LocalDateTime
+import java.time.Instant.now
 
 @Repository
 class MongoNotVerifiedUserRepository(
@@ -32,7 +32,7 @@ class MongoNotVerifiedUserRepository(
         val query = Query(where(NotVerifiedUserEntity::id.name).`is`(id))
         val update = Update()
         update.set(NotVerifiedUserEntity::code.name, newCode)
-        update.set(NotVerifiedUserEntity::codeUpdatedAt.name, LocalDateTime.now())
+        update.set(NotVerifiedUserEntity::codeUpdatedAt.name, now())
         mongo.updateFirst(query, update, NotVerifiedUserEntity::class.java)
     }
 

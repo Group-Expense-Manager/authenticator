@@ -45,7 +45,8 @@ import pl.edu.agh.gem.util.createVerificationEmailRequest
 import pl.edu.agh.gem.util.createVerificationRequest
 import pl.edu.agh.gem.util.saveNotVerifiedUser
 import pl.edu.agh.gem.util.saveVerifiedUser
-import java.time.LocalDateTime
+import java.time.Instant.now
+import java.time.temporal.ChronoUnit.MINUTES
 
 class AuthControllerIT(
     private val service: ServiceTestClient,
@@ -275,7 +276,7 @@ class AuthControllerIT(
         val email = "email@email.com"
         saveNotVerifiedUser(
             email = email,
-            updatedCodeAt = LocalDateTime.now().minusMinutes(10),
+            updatedCodeAt = now().minus(10, MINUTES),
             notVerifiedUserRepository = notVerifiedUserRepository,
         )
         stubEmailSenderVerification()
@@ -293,7 +294,7 @@ class AuthControllerIT(
         val email = ""
         saveNotVerifiedUser(
             email = email,
-            updatedCodeAt = LocalDateTime.now().minusMinutes(10),
+            updatedCodeAt = now().minus(10, MINUTES),
             notVerifiedUserRepository = notVerifiedUserRepository,
         )
         val verificationEmailRequest = createVerificationEmailRequest(email)

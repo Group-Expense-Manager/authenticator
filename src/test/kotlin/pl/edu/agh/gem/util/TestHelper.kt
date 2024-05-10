@@ -10,7 +10,8 @@ import pl.edu.agh.gem.internal.model.auth.VerifiedUser
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
-import java.time.LocalDateTime
+import java.time.Instant
+import java.time.Instant.now
 
 fun createEmailDetails(
     email: String = "my@mail.com",
@@ -24,9 +25,9 @@ fun createNotVerifiedUser(
     id: String = "id",
     email: String = "my@mail.com",
     password: String = "encodedPassword",
-    createdAt: LocalDateTime = LocalDateTime.now(),
+    createdAt: Instant = now(),
     code: String = "123456",
-    updatedCodeAt: LocalDateTime = LocalDateTime.now(),
+    updatedCodeAt: Instant = now(),
 ) = NotVerifiedUser(
     id = id,
     email = email,
@@ -40,9 +41,9 @@ fun saveNotVerifiedUser(
     id: String = "id",
     email: String = "my@mail.com",
     password: String = "encodedPassword",
-    createdAt: LocalDateTime = LocalDateTime.now(),
+    createdAt: Instant = now(),
     code: String = "123456",
-    updatedCodeAt: LocalDateTime = LocalDateTime.now(),
+    updatedCodeAt: Instant = now(),
     notVerifiedUserRepository: NotVerifiedUserRepository,
 ) = notVerifiedUserRepository.create(
     createNotVerifiedUser(

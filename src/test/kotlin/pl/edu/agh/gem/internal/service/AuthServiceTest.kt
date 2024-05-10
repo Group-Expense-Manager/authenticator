@@ -22,7 +22,8 @@ import pl.edu.agh.gem.util.createNotVerifiedUser
 import pl.edu.agh.gem.util.createVerification
 import pl.edu.agh.gem.util.createVerifiedUser
 import java.time.Duration
-import java.time.LocalDateTime.now
+import java.time.Instant.now
+import java.time.temporal.ChronoUnit.MINUTES
 
 class AuthServiceTest : ShouldSpec(
     {
@@ -144,7 +145,7 @@ class AuthServiceTest : ShouldSpec(
 
         should("send verification email") {
             // given
-            val notVerifiedUser = createNotVerifiedUser(email = DUMMY_EMAIL, updatedCodeAt = now().minusMinutes(10))
+            val notVerifiedUser = createNotVerifiedUser(email = DUMMY_EMAIL, updatedCodeAt = now().minus(10, MINUTES))
             whenever(notVerifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(notVerifiedUser)
             whenever(emailProperties.timeBetweenEmails).thenReturn(Duration.ofMinutes(5))
 
@@ -168,7 +169,7 @@ class AuthServiceTest : ShouldSpec(
 
         should("throw EmailRecentlySentException when sending email and email was recently sent") {
             // given
-            val notVerifiedUser = createNotVerifiedUser(email = DUMMY_EMAIL, updatedCodeAt = now().minusMinutes(4))
+            val notVerifiedUser = createNotVerifiedUser(email = DUMMY_EMAIL, updatedCodeAt = now().minus(4, MINUTES))
             whenever(notVerifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(notVerifiedUser)
             whenever(emailProperties.timeBetweenEmails).thenReturn(Duration.ofMinutes(5))
 

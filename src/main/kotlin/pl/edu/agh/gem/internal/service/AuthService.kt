@@ -12,7 +12,7 @@ import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
 import java.security.SecureRandom
 import java.time.Duration
-import java.time.LocalDateTime
+import java.time.Instant.now
 import java.util.stream.Collectors
 
 @Service
@@ -69,7 +69,7 @@ class AuthService(
     }
 
     private fun canSendEmail(notVerifiedUser: NotVerifiedUser) =
-        notVerifiedUser.codeUpdatedAt.isBefore(LocalDateTime.now().minus(emailProperties.timeBetweenEmails))
+        notVerifiedUser.codeUpdatedAt.isBefore(now().minus(emailProperties.timeBetweenEmails))
 
     companion object {
         private const val CODE_LENGTH = 6L
