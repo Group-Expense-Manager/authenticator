@@ -1,8 +1,8 @@
 package pl.edu.agh.gem.external.dto.auth
 
 import jakarta.validation.constraints.NotBlank
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.CODE_NOT_BLANK
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.EMAIL_NOT_BLANK
+import pl.edu.agh.gem.external.dto.ValidationMessage.CODE_NOT_BLANK
+import pl.edu.agh.gem.external.dto.ValidationMessage.EMAIL_NOT_BLANK
 import pl.edu.agh.gem.internal.model.auth.Verification
 
 data class VerificationRequest(

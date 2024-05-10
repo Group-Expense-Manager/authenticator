@@ -161,7 +161,7 @@ class AuthServiceTest : ShouldSpec(
             // given
             whenever(notVerifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(null)
 
-            // when then
+            // when & then
             shouldThrowExactly<UserNotFoundException> { authService.sendVerificationEmail(DUMMY_EMAIL) }
             verify(notVerifiedUserRepository, times(1)).findByEmail(DUMMY_EMAIL)
         }
