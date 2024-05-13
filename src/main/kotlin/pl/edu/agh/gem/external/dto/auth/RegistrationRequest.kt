@@ -3,22 +3,31 @@ package pl.edu.agh.gem.external.dto.auth
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
+import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.EMAIL_NOT_BLANK
+import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.MAX_PASSWORD_LENGTH
+import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.MIN_PASSWORD_LENGTH
+import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.PASSWORD_DIGIT
+import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.PASSWORD_LOWERCASE
+import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.PASSWORD_NOT_BLANK
+import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.PASSWORD_SPECIAL_CHARACTER
+import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.PASSWORD_UPPERCASE
+import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.WRONG_EMAIL_FORMAT
 
 data class RegistrationRequest(
-    @field:NotBlank(message = "Email can not be blank")
+    @field:NotBlank(message = EMAIL_NOT_BLANK)
     @field:Pattern(
         regexp = "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$",
-        message = "Wrong email format",
+        message = WRONG_EMAIL_FORMAT,
     )
     val email: String,
-    @field:NotBlank(message = "Password can not be blank")
-    @field:Size(min = 8, message = "Minimum password length is 8")
-    @field:Size(max = 30, message = "Maximum password length is 30")
+    @field:NotBlank(message = PASSWORD_NOT_BLANK)
+    @field:Size(min = 8, message = MIN_PASSWORD_LENGTH)
+    @field:Size(max = 30, message = MAX_PASSWORD_LENGTH)
     @field:Pattern.List(
-        Pattern(regexp = ".*[a-z].*", message = "Password must contain at least one lowercase letter"),
-        Pattern(regexp = ".*[A-Z].*", message = "Password must contain at least one uppercase letter"),
-        Pattern(regexp = ".*\\d.*", message = "Password must contain at least one digit"),
-        Pattern(regexp = ".*[@#$%^&+=!].*", message = "Password must contain at least one special character among @#$%^&+=!"),
+        Pattern(regexp = ".*[a-z].*", message = PASSWORD_LOWERCASE),
+        Pattern(regexp = ".*[A-Z].*", message = PASSWORD_UPPERCASE),
+        Pattern(regexp = ".*\\d.*", message = PASSWORD_DIGIT),
+        Pattern(regexp = ".*[@#$%^&+=!].*", message = PASSWORD_SPECIAL_CHARACTER),
     )
     val password: String,
 )

@@ -12,8 +12,19 @@ class MongoVerifiedUserRepository(
     private val mongo: MongoTemplate,
 ) : VerifiedUserRepository {
 
-    override fun existByEmail(email: String): Boolean {
+    override fun findByEmail(email: String): VerifiedUser? {
         val query = Query().addCriteria(where(VerifiedUser::email.name).`is`(email))
-        return mongo.exists(query, VerifiedUserEntity::class.java)
+        return mongo.findOne(query, VerifiedUserEntity::class.java)?.toDomain()
     }
+
+    override fun create(verifiedUser: VerifiedUser): VerifiedUser {
+        return mongo.insert(verifiedUser.toEntity()).toDomain()
+    }
+
+    private fun VerifiedUser.toEntity() =
+        VerifiedUserEntity(
+            id = id,
+            email = email,
+            password = password,
+        )
 }

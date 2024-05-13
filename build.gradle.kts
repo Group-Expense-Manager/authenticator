@@ -99,6 +99,10 @@ dependencies {
     implementation(libs.lib.gem)
     implementation(libs.bundles.resilience4j)
 
+    implementation(libs.jsonwebtoken.jjwt.api)
+    runtimeOnly(libs.jsonwebtoken.jjwt.impl)
+    runtimeOnly(libs.jsonwebtoken.jjwt.jackson)
+
     testImplementation(testlibs.bundles.kotest.core)
     testImplementation(testlibs.bundles.kotest.extensions)
     testImplementation(testlibs.bundles.testcontainers)

@@ -48,6 +48,11 @@ dependencyResolutionManagement {
                     "resilience4j-spring",
                 ),
             )
+
+            version("jsonwebtoken", "0.12.5")
+            library("jsonwebtoken-jjwt-api", "io.jsonwebtoken", "jjwt-api").versionRef("jsonwebtoken")
+            library("jsonwebtoken-jjwt-impl", "io.jsonwebtoken", "jjwt-impl").versionRef("jsonwebtoken")
+            library("jsonwebtoken-jjwt-jackson", "io.jsonwebtoken", "jjwt-jackson").versionRef("jsonwebtoken")
         }
         create("testlibs") {
             version("kotest", "5.8.1")
