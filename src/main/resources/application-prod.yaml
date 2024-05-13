@@ -1,4 +1,13 @@
-data:
-  mongodb:
-    uri: mongodb + srv ://<username>:<pwd>@<cluster>.mongodb.net/<dbname>
+spring:
+  data:
+    mongodb:
+      database: authenticator_db
+      username: ${AUTHENTICATOR_DB_USERNAME}
+      password: ${AUTHENTICATOR_DB_PASSWORD}
+      authentication-database: admin
+      host: ${AUTHENTICATOR_DB_HOST}
 
+email-sender-client:
+  url: http://${EMAIL_SENDER_SERVICE_SERVICE_HOST}:8080
+  read-timeout: 10000ms
+  connect-timeout: 1000ms
