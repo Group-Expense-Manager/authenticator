@@ -6,12 +6,14 @@ import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.HttpStatus.CREATED
 import org.springframework.http.HttpStatus.FORBIDDEN
+import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.HttpStatus.OK
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.crypto.password.PasswordEncoder
 import pl.edu.agh.gem.assertion.shouldHaveErrors
 import pl.edu.agh.gem.assertion.shouldHaveHttpStatus
 import pl.edu.agh.gem.assertion.shouldHaveValidationError
+import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.CODE_NOT_BLANK
 import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.EMAIL_NOT_BLANK
 import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.MAX_PASSWORD_LENGTH
 import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.MIN_PASSWORD_LENGTH
@@ -27,9 +29,17 @@ import pl.edu.agh.gem.integration.ability.stubEmailSenderVerification
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
 import pl.edu.agh.gem.internal.service.DuplicateEmailException
+import pl.edu.agh.gem.internal.service.UserNotFoundException
 import pl.edu.agh.gem.internal.service.UserNotVerifiedException
+import pl.edu.agh.gem.internal.service.VerificationException
+import pl.edu.agh.gem.util.DummyData.DUMMY_CODE
+import pl.edu.agh.gem.util.DummyData.DUMMY_EMAIL
+import pl.edu.agh.gem.util.DummyData.DUMMY_PASSWORD
+import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_CODE
+import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_PASSWORD
 import pl.edu.agh.gem.util.createLoginRequest
 import pl.edu.agh.gem.util.createRegistrationRequest
+import pl.edu.agh.gem.util.createVerificationRequest
 import pl.edu.agh.gem.util.saveNotVerifiedUser
 import pl.edu.agh.gem.util.saveVerifiedUser
 
@@ -75,9 +85,8 @@ class AuthControllerIT(
 
     should("return DuplicateEmailException when user with given email already exists") {
         // given
-        val email = "email@email.pl"
-        val registrationRequest = createRegistrationRequest(email = email)
-        saveNotVerifiedUser(email = email, notVerifiedUserRepository = notVerifiedUserRepository)
+        val registrationRequest = createRegistrationRequest(email = DUMMY_EMAIL)
+        saveNotVerifiedUser(email = DUMMY_EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
 
         // when
         val response = service.register(registrationRequest)
@@ -91,11 +100,9 @@ class AuthControllerIT(
 
     should("login user") {
         // given
-        val email = "email@email.pl"
-        val password = "Password1!"
         stubEmailSenderVerification()
-        saveVerifiedUser(email = email, password = passwordEncoder.encode(password), verifiedUserRepository = verifiedUserRepository)
-        val loginRequest = createLoginRequest(email = email, password = password)
+        saveVerifiedUser(email = DUMMY_EMAIL, password = passwordEncoder.encode(DUMMY_PASSWORD), verifiedUserRepository = verifiedUserRepository)
+        val loginRequest = createLoginRequest(email = DUMMY_EMAIL, password = DUMMY_PASSWORD)
 
         // when
         val response = service.login(loginRequest)
@@ -130,10 +137,12 @@ class AuthControllerIT(
 
     should("return UserNotVerifiedException when user is not verified") {
         // given
-        val email = "email@email.pl"
-        val password = "Password1!"
-        saveNotVerifiedUser(email = email, password = passwordEncoder.encode(password), notVerifiedUserRepository = notVerifiedUserRepository)
-        val loginRequest = createLoginRequest(email = email, password = password)
+        saveNotVerifiedUser(
+            email = DUMMY_EMAIL,
+            password = passwordEncoder.encode(DUMMY_PASSWORD),
+            notVerifiedUserRepository = notVerifiedUserRepository,
+        )
+        val loginRequest = createLoginRequest(email = DUMMY_EMAIL, password = DUMMY_PASSWORD)
 
         // when
         val response = service.login(loginRequest)
@@ -161,11 +170,8 @@ class AuthControllerIT(
 
     should("return BadCredentialsException when password is not correct for verified user") {
         // given
-        val email = "email@email.pl"
-        val correctPassword = "Password1!"
-        val wrongPassword = "Password2!"
-        saveVerifiedUser(email = email, password = passwordEncoder.encode(correctPassword), verifiedUserRepository = verifiedUserRepository)
-        val loginRequest = createLoginRequest(email = email, password = wrongPassword)
+        saveVerifiedUser(email = DUMMY_EMAIL, password = passwordEncoder.encode(DUMMY_PASSWORD), verifiedUserRepository = verifiedUserRepository)
+        val loginRequest = createLoginRequest(email = DUMMY_EMAIL, password = OTHER_DUMMY_PASSWORD)
 
         // when
         val response = service.login(loginRequest)
@@ -179,11 +185,12 @@ class AuthControllerIT(
 
     should("return BadCredentialsException when password is not correct for not verified user") {
         // given
-        val email = "email@email.pl"
-        val correctPassword = "Password1!"
-        val wrongPassword = "Password2!"
-        saveNotVerifiedUser(email = email, password = passwordEncoder.encode(correctPassword), notVerifiedUserRepository = notVerifiedUserRepository)
-        val loginRequest = createLoginRequest(email = email, password = wrongPassword)
+        saveNotVerifiedUser(
+            email = DUMMY_EMAIL,
+            password = passwordEncoder.encode(DUMMY_PASSWORD),
+            notVerifiedUserRepository = notVerifiedUserRepository,
+        )
+        val loginRequest = createLoginRequest(email = DUMMY_EMAIL, password = OTHER_DUMMY_PASSWORD)
 
         // when
         val response = service.login(loginRequest)
@@ -192,6 +199,71 @@ class AuthControllerIT(
         response shouldHaveHttpStatus BAD_REQUEST
         response shouldHaveErrors {
             errors.first().code shouldBe BadCredentialsException::class.simpleName
+        }
+    }
+
+    should("Verify code") {
+        // given
+        val notVerifiedUser = saveNotVerifiedUser(email = DUMMY_EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
+        val verificationRequest = createVerificationRequest(email = DUMMY_EMAIL, code = notVerifiedUser.code)
+
+        // when
+        val response = service.verify(verificationRequest)
+
+        // then
+        response shouldHaveHttpStatus OK
+    }
+
+    should("return validation exception when code is blank") {
+        // given
+        val verificationRequest = createVerificationRequest(code = "")
+
+        // when
+        val response = service.verify(verificationRequest)
+
+        // then
+        response shouldHaveHttpStatus BAD_REQUEST
+        response shouldHaveValidationError CODE_NOT_BLANK
+    }
+
+    should("return validation exception when email is blank") {
+        // given
+        val verificationRequest = createVerificationRequest(email = "")
+
+        // when
+        val response = service.verify(verificationRequest)
+
+        // then
+        response shouldHaveHttpStatus BAD_REQUEST
+        response shouldHaveValidationError EMAIL_NOT_BLANK
+    }
+
+    should("return UserNotFoundException when verifying user does not exist") {
+        // given
+        val verificationRequest = createVerificationRequest()
+
+        // when
+        val response = service.verify(verificationRequest)
+
+        // then
+        response shouldHaveHttpStatus NOT_FOUND
+        response shouldHaveErrors {
+            errors.first().code shouldBe UserNotFoundException::class.simpleName
+        }
+    }
+
+    should("return VerificationException when verifying and code is invalid") {
+        // given
+        saveNotVerifiedUser(email = DUMMY_EMAIL, code = DUMMY_CODE, notVerifiedUserRepository = notVerifiedUserRepository)
+        val verificationRequest = createVerificationRequest(email = DUMMY_EMAIL, code = OTHER_DUMMY_CODE)
+
+        // when
+        val response = service.verify(verificationRequest)
+
+        // then
+        response shouldHaveHttpStatus BAD_REQUEST
+        response shouldHaveErrors {
+            errors.first().code shouldBe VerificationException::class.simpleName
         }
     }
 },)

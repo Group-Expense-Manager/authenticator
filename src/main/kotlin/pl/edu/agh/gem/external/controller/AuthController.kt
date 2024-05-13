@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import pl.edu.agh.gem.external.dto.auth.LoginRequest
 import pl.edu.agh.gem.external.dto.auth.RegistrationRequest
+import pl.edu.agh.gem.external.dto.auth.VerificationRequest
 import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
 import pl.edu.agh.gem.internal.service.AuthService
 import pl.edu.agh.gem.media.InternalApiMediaType.APPLICATION_JSON_INTERNAL_VER_1
@@ -51,6 +52,16 @@ class AuthController(
         )
 
         val verifiedUser = authService.getVerifiedUser(loginRequest.email)
+        return jwtService.createToken(verifiedUser)
+    }
+
+    @PostMapping("/open/verify", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
+    @ResponseStatus(OK)
+    fun verify(
+        @Valid @RequestBody
+        verificationRequest: VerificationRequest,
+    ): String {
+        val verifiedUser = authService.verify(verificationRequest.toDomain())
         return jwtService.createToken(verifiedUser)
     }
 

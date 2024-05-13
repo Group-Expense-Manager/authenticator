@@ -2,7 +2,9 @@ package pl.edu.agh.gem.util
 
 import pl.edu.agh.gem.external.dto.auth.LoginRequest
 import pl.edu.agh.gem.external.dto.auth.RegistrationRequest
+import pl.edu.agh.gem.external.dto.auth.VerificationRequest
 import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
+import pl.edu.agh.gem.internal.model.auth.Verification
 import pl.edu.agh.gem.internal.model.auth.VerifiedUser
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
@@ -91,3 +93,27 @@ fun saveVerifiedUser(
         password = password,
     ),
 )
+
+fun createVerificationRequest(
+    email: String = "my@mail.com",
+    code: String = "123456",
+) = VerificationRequest(
+    email = email,
+    code = code,
+)
+
+fun createVerification(
+    email: String = "my@mail.com",
+    code: String = "123456",
+) = Verification(
+    email = email,
+    code = code,
+)
+
+object DummyData {
+    const val DUMMY_EMAIL = "email@email.com"
+    const val DUMMY_CODE = "123456"
+    const val OTHER_DUMMY_CODE = "654321"
+    const val DUMMY_PASSWORD = "Password123!"
+    const val OTHER_DUMMY_PASSWORD = "Password321!"
+}

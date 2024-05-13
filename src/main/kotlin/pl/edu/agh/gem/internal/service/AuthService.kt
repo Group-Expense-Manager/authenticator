@@ -1,8 +1,10 @@
 package pl.edu.agh.gem.internal.service
 
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import pl.edu.agh.gem.internal.client.EmailSenderClient
 import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
+import pl.edu.agh.gem.internal.model.auth.Verification
 import pl.edu.agh.gem.internal.model.auth.VerifiedUser
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
@@ -40,11 +42,31 @@ class AuthService(
         return verifiedUserRepository.findByEmail(email) ?: throw UserNotVerifiedException()
     }
 
+    @Transactional
+    fun verify(verification: Verification): VerifiedUser {
+        val notVerifiedUser = notVerifiedUserRepository.findByEmail(verification.email) ?: throw UserNotFoundException()
+
+        if (notVerifiedUser.code != verification.code) {
+            throw VerificationException(notVerifiedUser.email)
+        }
+        notVerifiedUserRepository.deleteById(notVerifiedUser.id)
+        return verifiedUserRepository.create(notVerifiedUser.toVerified())
+    }
+
     companion object {
         private const val CODE_LENGTH = 6L
         private const val RANDOM_NUMBER_BOUND = 10
     }
 }
 
+private fun NotVerifiedUser.toVerified() =
+    VerifiedUser(
+        id = id,
+        email = email,
+        password = password,
+    )
+
 class DuplicateEmailException(email: String) : RuntimeException("Email address $email is already taken")
 class UserNotVerifiedException : RuntimeException("User is not verified")
+class UserNotFoundException : RuntimeException("User not found")
+class VerificationException(email: String) : RuntimeException("Verification failed for $email")
