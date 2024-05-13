@@ -248,7 +248,7 @@ class AuthControllerIT(
         // then
         response shouldHaveHttpStatus NOT_FOUND
         response shouldHaveErrors {
-            errors[0].code shouldBe UserNotFoundException::class.simpleName
+            errors.first().code shouldBe UserNotFoundException::class.simpleName
         }
     }
 
@@ -263,7 +263,7 @@ class AuthControllerIT(
         // then
         response shouldHaveHttpStatus BAD_REQUEST
         response shouldHaveErrors {
-            errors[0].code shouldBe VerificationException::class.simpleName
+            errors.first().code shouldBe VerificationException::class.simpleName
         }
     }
 },)
