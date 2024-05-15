@@ -23,3 +23,6 @@ email-sender-client:
   url: "some/url"
   read-timeout: 1000ms
   connect-timeout: 1000ms
+
+email:
+  time-between-emails: PT5M

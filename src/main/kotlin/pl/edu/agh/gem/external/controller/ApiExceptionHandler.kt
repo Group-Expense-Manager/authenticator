@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.HttpStatus.NOT_FOUND
+import org.springframework.http.HttpStatus.TOO_MANY_REQUESTS
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -20,6 +21,7 @@ import pl.edu.agh.gem.error.withDetails
 import pl.edu.agh.gem.error.withMessage
 import pl.edu.agh.gem.error.withUserMessage
 import pl.edu.agh.gem.internal.service.DuplicateEmailException
+import pl.edu.agh.gem.internal.service.EmailRecentlySentException
 import pl.edu.agh.gem.internal.service.UserNotFoundException
 import pl.edu.agh.gem.internal.service.UserNotVerifiedException
 import pl.edu.agh.gem.internal.service.VerificationException
@@ -51,6 +53,11 @@ class ApiExceptionHandler {
     @ExceptionHandler(VerificationException::class)
     fun handleVerificationException(exception: VerificationException): ResponseEntity<SimpleErrorsHolder> {
         return ResponseEntity(handleError(exception), BAD_REQUEST)
+    }
+
+    @ExceptionHandler(EmailRecentlySentException::class)
+    fun handleEmailRecentlySentException(exception: EmailRecentlySentException): ResponseEntity<SimpleErrorsHolder> {
+        return ResponseEntity(handleError(exception), TOO_MANY_REQUESTS)
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)

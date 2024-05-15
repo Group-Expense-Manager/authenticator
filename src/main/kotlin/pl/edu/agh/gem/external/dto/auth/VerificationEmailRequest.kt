@@ -2,11 +2,8 @@ package pl.edu.agh.gem.external.dto.auth
 
 import jakarta.validation.constraints.NotBlank
 import pl.edu.agh.gem.external.dto.ValidationMessage.EMAIL_NOT_BLANK
-import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_NOT_BLANK
 
-data class LoginRequest(
+data class VerificationEmailRequest(
     @field:NotBlank(message = EMAIL_NOT_BLANK)
     val email: String,
-    @field:NotBlank(message = PASSWORD_NOT_BLANK)
-    val password: String,
 )

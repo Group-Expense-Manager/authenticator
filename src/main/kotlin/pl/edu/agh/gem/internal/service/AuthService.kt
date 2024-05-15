@@ -1,5 +1,6 @@
 package pl.edu.agh.gem.internal.service
 
+import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import pl.edu.agh.gem.internal.client.EmailSenderClient
@@ -10,6 +11,8 @@ import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
 import java.security.SecureRandom
+import java.time.Duration
+import java.time.Instant.now
 import java.util.stream.Collectors
 
 @Service
@@ -17,6 +20,7 @@ class AuthService(
     private val notVerifiedUserRepository: NotVerifiedUserRepository,
     private val verifiedUserRepository: VerifiedUserRepository,
     private val senderClient: EmailSenderClient,
+    private val emailProperties: EmailProperties,
 ) {
 
     fun create(notVerifiedUser: NotVerifiedUser) {
@@ -53,6 +57,20 @@ class AuthService(
         return verifiedUserRepository.create(notVerifiedUser.toVerified())
     }
 
+    fun sendVerificationEmail(email: String) {
+        val notVerifiedUser = notVerifiedUserRepository.findByEmail(email) ?: throw UserNotFoundException()
+
+        if (!canSendEmail(notVerifiedUser)) {
+            throw EmailRecentlySentException()
+        }
+        val newCode = generateCode()
+        senderClient.sendVerificationEmail(VerificationEmailDetails(notVerifiedUser.email, newCode))
+        notVerifiedUserRepository.updateVerificationCode(notVerifiedUser.id, newCode)
+    }
+
+    private fun canSendEmail(notVerifiedUser: NotVerifiedUser) =
+        notVerifiedUser.codeUpdatedAt.isBefore(now().minus(emailProperties.timeBetweenEmails))
+
     companion object {
         private const val CODE_LENGTH = 6L
         private const val RANDOM_NUMBER_BOUND = 10
@@ -66,7 +84,13 @@ private fun NotVerifiedUser.toVerified() =
         password = password,
     )
 
+@ConfigurationProperties(prefix = "email")
+data class EmailProperties(
+    val timeBetweenEmails: Duration,
+)
+
 class DuplicateEmailException(email: String) : RuntimeException("Email address $email is already taken")
 class UserNotVerifiedException : RuntimeException("User is not verified")
 class UserNotFoundException : RuntimeException("User not found")
 class VerificationException(email: String) : RuntimeException("Verification failed for $email")
+class EmailRecentlySentException : RuntimeException("Email was recently sent, please wait 5 minutes")

@@ -13,12 +13,13 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import pl.edu.agh.gem.external.dto.auth.LoginRequest
 import pl.edu.agh.gem.external.dto.auth.RegistrationRequest
+import pl.edu.agh.gem.external.dto.auth.VerificationEmailRequest
 import pl.edu.agh.gem.external.dto.auth.VerificationRequest
 import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
 import pl.edu.agh.gem.internal.service.AuthService
 import pl.edu.agh.gem.media.InternalApiMediaType.APPLICATION_JSON_INTERNAL_VER_1
 import pl.edu.agh.gem.security.JwtService
-import java.time.LocalDateTime
+import java.time.Instant.now
 import java.util.UUID.randomUUID
 
 @RestController
@@ -65,13 +66,22 @@ class AuthController(
         return jwtService.createToken(verifiedUser)
     }
 
+    @PostMapping("/open/send-verification-email", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
+    @ResponseStatus(OK)
+    fun sendVerificationEmail(
+        @Valid @RequestBody
+        verificationEmailRequest: VerificationEmailRequest,
+    ) {
+        authService.sendVerificationEmail(verificationEmailRequest.email)
+    }
+
     private fun RegistrationRequest.toDomain() =
         NotVerifiedUser(
             id = randomUUID().toString(),
             email = email,
             password = passwordEncoder.encode(password),
-            createdAt = LocalDateTime.now(),
+            createdAt = now(),
             code = authService.generateCode(),
-            codeUpdatedAt = LocalDateTime.now(),
+            codeUpdatedAt = now(),
         )
 }

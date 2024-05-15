@@ -8,27 +8,29 @@ import org.springframework.http.HttpStatus.CREATED
 import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.HttpStatus.OK
+import org.springframework.http.HttpStatus.TOO_MANY_REQUESTS
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.crypto.password.PasswordEncoder
 import pl.edu.agh.gem.assertion.shouldHaveErrors
 import pl.edu.agh.gem.assertion.shouldHaveHttpStatus
 import pl.edu.agh.gem.assertion.shouldHaveValidationError
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.CODE_NOT_BLANK
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.EMAIL_NOT_BLANK
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.MAX_PASSWORD_LENGTH
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.MIN_PASSWORD_LENGTH
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.PASSWORD_DIGIT
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.PASSWORD_LOWERCASE
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.PASSWORD_NOT_BLANK
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.PASSWORD_SPECIAL_CHARACTER
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.PASSWORD_UPPERCASE
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.WRONG_EMAIL_FORMAT
+import pl.edu.agh.gem.external.dto.ValidationMessage.CODE_NOT_BLANK
+import pl.edu.agh.gem.external.dto.ValidationMessage.EMAIL_NOT_BLANK
+import pl.edu.agh.gem.external.dto.ValidationMessage.MAX_PASSWORD_LENGTH
+import pl.edu.agh.gem.external.dto.ValidationMessage.MIN_PASSWORD_LENGTH
+import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_DIGIT
+import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_LOWERCASE
+import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_NOT_BLANK
+import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_SPECIAL_CHARACTER
+import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_UPPERCASE
+import pl.edu.agh.gem.external.dto.ValidationMessage.WRONG_EMAIL_FORMAT
 import pl.edu.agh.gem.integration.BaseIntegrationSpec
 import pl.edu.agh.gem.integration.ability.ServiceTestClient
 import pl.edu.agh.gem.integration.ability.stubEmailSenderVerification
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
 import pl.edu.agh.gem.internal.service.DuplicateEmailException
+import pl.edu.agh.gem.internal.service.EmailRecentlySentException
 import pl.edu.agh.gem.internal.service.UserNotFoundException
 import pl.edu.agh.gem.internal.service.UserNotVerifiedException
 import pl.edu.agh.gem.internal.service.VerificationException
@@ -39,9 +41,12 @@ import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_CODE
 import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_PASSWORD
 import pl.edu.agh.gem.util.createLoginRequest
 import pl.edu.agh.gem.util.createRegistrationRequest
+import pl.edu.agh.gem.util.createVerificationEmailRequest
 import pl.edu.agh.gem.util.createVerificationRequest
 import pl.edu.agh.gem.util.saveNotVerifiedUser
 import pl.edu.agh.gem.util.saveVerifiedUser
+import java.time.Instant.now
+import java.time.temporal.ChronoUnit.MINUTES
 
 class AuthControllerIT(
     private val service: ServiceTestClient,
@@ -264,6 +269,69 @@ class AuthControllerIT(
         response shouldHaveHttpStatus BAD_REQUEST
         response shouldHaveErrors {
             errors.first().code shouldBe VerificationException::class.simpleName
+        }
+    }
+    should("send verification email") {
+        // given
+        val email = "email@email.com"
+        saveNotVerifiedUser(
+            email = email,
+            updatedCodeAt = now().minus(10, MINUTES),
+            notVerifiedUserRepository = notVerifiedUserRepository,
+        )
+        stubEmailSenderVerification()
+        val verificationEmailRequest = createVerificationEmailRequest(email)
+
+        // when
+        val response = service.sendVerificationEmail(verificationEmailRequest)
+
+        // then
+        response shouldHaveHttpStatus OK
+    }
+
+    should("return validation exception when email is blank") {
+        // given
+        val email = ""
+        saveNotVerifiedUser(
+            email = email,
+            updatedCodeAt = now().minus(10, MINUTES),
+            notVerifiedUserRepository = notVerifiedUserRepository,
+        )
+        val verificationEmailRequest = createVerificationEmailRequest(email)
+
+        // when
+        val response = service.sendVerificationEmail(verificationEmailRequest)
+
+        // then
+        response shouldHaveHttpStatus BAD_REQUEST
+        response shouldHaveValidationError EMAIL_NOT_BLANK
+    }
+
+    should("return UserNotFoundException when sending verification and user does not exist") {
+        // given  when
+        val verificationEmailRequest = createVerificationEmailRequest()
+        val response = service.sendVerificationEmail(verificationEmailRequest)
+
+        // then
+        response shouldHaveHttpStatus NOT_FOUND
+        response shouldHaveErrors {
+            errors.first().code shouldBe UserNotFoundException::class.simpleName
+        }
+    }
+
+    should("return EmailRecentlySentException when mail was recently sent") {
+        // given
+        saveNotVerifiedUser(email = DUMMY_EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
+        stubEmailSenderVerification()
+        val verificationEmailRequest = createVerificationEmailRequest(DUMMY_EMAIL)
+
+        // when
+        val response = service.sendVerificationEmail(verificationEmailRequest)
+
+        // then
+        response shouldHaveHttpStatus TOO_MANY_REQUESTS
+        response shouldHaveErrors {
+            errors.first().code shouldBe EmailRecentlySentException::class.simpleName
         }
     }
 },)

@@ -3,15 +3,15 @@ package pl.edu.agh.gem.external.dto.auth
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.EMAIL_NOT_BLANK
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.MAX_PASSWORD_LENGTH
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.MIN_PASSWORD_LENGTH
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.PASSWORD_DIGIT
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.PASSWORD_LOWERCASE
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.PASSWORD_NOT_BLANK
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.PASSWORD_SPECIAL_CHARACTER
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.PASSWORD_UPPERCASE
-import pl.edu.agh.gem.external.dto.ValidationMessage.Companion.WRONG_EMAIL_FORMAT
+import pl.edu.agh.gem.external.dto.ValidationMessage.EMAIL_NOT_BLANK
+import pl.edu.agh.gem.external.dto.ValidationMessage.MAX_PASSWORD_LENGTH
+import pl.edu.agh.gem.external.dto.ValidationMessage.MIN_PASSWORD_LENGTH
+import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_DIGIT
+import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_LOWERCASE
+import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_NOT_BLANK
+import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_SPECIAL_CHARACTER
+import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_UPPERCASE
+import pl.edu.agh.gem.external.dto.ValidationMessage.WRONG_EMAIL_FORMAT
 
 data class RegistrationRequest(
     @field:NotBlank(message = EMAIL_NOT_BLANK)

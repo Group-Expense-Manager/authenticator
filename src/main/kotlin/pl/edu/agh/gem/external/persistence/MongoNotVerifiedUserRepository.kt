@@ -3,9 +3,11 @@ package pl.edu.agh.gem.external.persistence
 import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria.where
 import org.springframework.data.mongodb.core.query.Query
+import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Repository
 import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
+import java.time.Instant.now
 
 @Repository
 class MongoNotVerifiedUserRepository(
@@ -24,6 +26,14 @@ class MongoNotVerifiedUserRepository(
         val query = Query().addCriteria(where(NotVerifiedUserEntity::id.name).`is`(userId))
 
         mongo.remove(query, NotVerifiedUserEntity::class.java)
+    }
+
+    override fun updateVerificationCode(id: String, newCode: String) {
+        val query = Query(where(NotVerifiedUserEntity::id.name).`is`(id))
+        val update = Update()
+        update.set(NotVerifiedUserEntity::code.name, newCode)
+        update.set(NotVerifiedUserEntity::codeUpdatedAt.name, now())
+        mongo.updateFirst(query, update, NotVerifiedUserEntity::class.java)
     }
 
     private fun NotVerifiedUser.toEntity() =
