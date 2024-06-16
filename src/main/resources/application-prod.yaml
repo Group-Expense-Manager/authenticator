@@ -1,11 +1,7 @@
 spring:
   data:
     mongodb:
-      database: authenticator_db
-      username: ${AUTHENTICATOR_DB_USERNAME}
-      password: ${AUTHENTICATOR_DB_PASSWORD}
-      authentication-database: admin
-      host: ${AUTHENTICATOR_DB_HOST}
+      uri: ${AUTHENTICATOR_DB_URI}
 
 email-sender-client:
   url: http://${EMAIL_SENDER_SERVICE_SERVICE_HOST}:8080
