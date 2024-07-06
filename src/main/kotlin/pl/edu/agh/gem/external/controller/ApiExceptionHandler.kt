@@ -28,6 +28,7 @@ import pl.edu.agh.gem.internal.service.EmailRecentlySentException
 import pl.edu.agh.gem.internal.service.UserNotFoundException
 import pl.edu.agh.gem.internal.service.UserNotVerifiedException
 import pl.edu.agh.gem.internal.service.VerificationException
+import pl.edu.agh.gem.internal.service.WrongPasswordException
 
 @ControllerAdvice
 @Order(LOWEST_PRECEDENCE)
@@ -61,6 +62,11 @@ class ApiExceptionHandler {
     @ExceptionHandler(EmailRecentlySentException::class)
     fun handleEmailRecentlySentException(exception: EmailRecentlySentException): ResponseEntity<SimpleErrorsHolder> {
         return ResponseEntity(handleError(exception), TOO_MANY_REQUESTS)
+    }
+
+    @ExceptionHandler(WrongPasswordException::class)
+    fun handleWrongPasswordException(exception: WrongPasswordException): ResponseEntity<SimpleErrorsHolder> {
+        return ResponseEntity(handleError(exception), BAD_REQUEST)
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)

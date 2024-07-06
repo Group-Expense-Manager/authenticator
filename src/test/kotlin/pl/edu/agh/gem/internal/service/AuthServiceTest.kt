@@ -10,6 +10,8 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import org.springframework.security.crypto.password.PasswordEncoder
+import pl.edu.agh.gem.helper.user.DummyUser.USER_ID
 import pl.edu.agh.gem.internal.client.EmailSenderClient
 import pl.edu.agh.gem.internal.client.UserDetailsManagerClient
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
@@ -18,7 +20,9 @@ import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
 import pl.edu.agh.gem.util.DummyData.DUMMY_CODE
 import pl.edu.agh.gem.util.DummyData.DUMMY_EMAIL
+import pl.edu.agh.gem.util.DummyData.DUMMY_PASSWORD
 import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_CODE
+import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_PASSWORD
 import pl.edu.agh.gem.util.createNotVerifiedUser
 import pl.edu.agh.gem.util.createVerification
 import pl.edu.agh.gem.util.createVerifiedUser
@@ -33,12 +37,16 @@ class AuthServiceTest : ShouldSpec(
         val emailSenderClient = mock<EmailSenderClient>()
         val emailProperties = mock<EmailProperties>()
         val userDetailsManagerClient = mock<UserDetailsManagerClient>()
+        val passwordEncoder = mock<PasswordEncoder>()
+
         val authService = AuthService(
             notVerifiedUserRepository,
             verifiedUserRepository,
             emailSenderClient,
             userDetailsManagerClient,
             emailProperties,
+            passwordEncoder,
+
         )
 
         should("create user") {
@@ -192,6 +200,44 @@ class AuthServiceTest : ShouldSpec(
             // then
             code shouldHaveLength 6
             code shouldMatch "\\d+"
+        }
+
+        should("change password") {
+            // given
+            val newEncodedPassword = "encoded"
+            whenever(verifiedUserRepository.findById(USER_ID)).thenReturn(createVerifiedUser(id = USER_ID, password = DUMMY_PASSWORD))
+            whenever(passwordEncoder.matches(anyVararg(String::class), anyVararg(String::class))).thenReturn(true)
+            whenever(passwordEncoder.encode(OTHER_DUMMY_PASSWORD)).thenReturn(newEncodedPassword)
+
+            // when
+            authService.changePassword(USER_ID, DUMMY_PASSWORD, OTHER_DUMMY_PASSWORD)
+
+            // then
+            verify(verifiedUserRepository, times(1)).findById(USER_ID)
+            verify(passwordEncoder, times(1)).matches(anyVararg(String::class), anyVararg(String::class))
+            verify(verifiedUserRepository, times(1)).updatePassword(USER_ID, newEncodedPassword)
+            verify(passwordEncoder, times(1)).encode(OTHER_DUMMY_PASSWORD)
+        }
+
+        should("throw UserNotFoundException when changing password and user does not exist") {
+            // given
+            whenever(verifiedUserRepository.findById(USER_ID)).thenReturn(null)
+
+            // when then
+            shouldThrowExactly<UserNotFoundException> { authService.changePassword(USER_ID, DUMMY_PASSWORD, OTHER_DUMMY_PASSWORD) }
+            verify(verifiedUserRepository, times(1)).findById(USER_ID)
+        }
+
+        should("throw WrongPasswordException when changing password and user does not exist") {
+            // given
+            whenever(verifiedUserRepository.findById(USER_ID)).thenReturn(createVerifiedUser(id = USER_ID, password = DUMMY_PASSWORD))
+            whenever(passwordEncoder.matches(anyVararg(String::class), anyVararg(String::class))).thenReturn(false)
+
+            // when then
+            shouldThrowExactly<WrongPasswordException> { authService.changePassword(USER_ID, DUMMY_PASSWORD, OTHER_DUMMY_PASSWORD) }
+            verify(verifiedUserRepository, times(1)).findById(USER_ID)
+            verify(passwordEncoder, times(1)).matches(anyVararg(String::class), anyVararg(String::class))
+            verify(verifiedUserRepository, times(0)).updatePassword(USER_ID, OTHER_DUMMY_PASSWORD)
         }
     },
 )

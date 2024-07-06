@@ -1,6 +1,7 @@
 package pl.edu.agh.gem.internal.service
 
 import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import pl.edu.agh.gem.internal.client.EmailSenderClient
@@ -24,6 +25,7 @@ class AuthService(
     private val senderClient: EmailSenderClient,
     private val userDetailsManagerClient: UserDetailsManagerClient,
     private val emailProperties: EmailProperties,
+    private val passwordEncoder: PasswordEncoder,
 ) {
 
     fun create(notVerifiedUser: NotVerifiedUser) {
@@ -78,6 +80,16 @@ class AuthService(
         notVerifiedUserRepository.updateVerificationCode(notVerifiedUser.id, newCode)
     }
 
+    fun changePassword(userId: String, oldPassword: String, newPassword: String) {
+        val verifiedUser = verifiedUserRepository.findById(userId) ?: throw UserNotFoundException()
+
+        if (!passwordEncoder.matches(oldPassword, verifiedUser.password)) {
+            throw WrongPasswordException()
+        }
+
+        verifiedUserRepository.updatePassword(verifiedUser.id, passwordEncoder.encode(newPassword))
+    }
+
     private fun canSendEmail(notVerifiedUser: NotVerifiedUser) =
         notVerifiedUser.codeUpdatedAt.isBefore(now().minus(emailProperties.timeBetweenEmails))
 
@@ -104,3 +116,4 @@ class UserNotVerifiedException : RuntimeException("User is not verified")
 class UserNotFoundException : RuntimeException("User not found")
 class VerificationException(email: String) : RuntimeException("Verification failed for $email")
 class EmailRecentlySentException : RuntimeException("Email was recently sent, please wait 5 minutes")
+class WrongPasswordException : RuntimeException("Wrong password")

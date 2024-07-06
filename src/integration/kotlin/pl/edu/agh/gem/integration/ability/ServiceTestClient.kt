@@ -6,11 +6,15 @@ import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.test.web.servlet.client.MockMvcWebTestClient.bindToApplicationContext
 import org.springframework.web.context.WebApplicationContext
 import pl.edu.agh.gem.external.dto.auth.LoginRequest
+import pl.edu.agh.gem.external.dto.auth.PasswordChangeRequest
 import pl.edu.agh.gem.external.dto.auth.RegistrationRequest
 import pl.edu.agh.gem.external.dto.auth.VerificationEmailRequest
 import pl.edu.agh.gem.external.dto.auth.VerificationRequest
 import pl.edu.agh.gem.headers.HeadersUtils.withAppContentType
+import pl.edu.agh.gem.headers.HeadersUtils.withValidatedUser
+import pl.edu.agh.gem.paths.Paths.EXTERNAL
 import pl.edu.agh.gem.paths.Paths.OPEN
+import pl.edu.agh.gem.security.GemUser
 import java.net.URI
 
 @Component
@@ -48,6 +52,14 @@ class ServiceTestClient(applicationContext: WebApplicationContext) {
         return webClient.post()
             .uri(URI("$OPEN/send-verification-email"))
             .headers { it.withAppContentType() }
+            .bodyValue(body)
+            .exchange()
+    }
+
+    fun changePassword(body: PasswordChangeRequest, gemUser: GemUser): ResponseSpec {
+        return webClient.put()
+            .uri(URI("$EXTERNAL/change-password"))
+            .headers { it.withAppContentType().withValidatedUser(gemUser) }
             .bodyValue(body)
             .exchange()
     }
