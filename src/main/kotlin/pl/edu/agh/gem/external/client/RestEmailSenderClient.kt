@@ -18,14 +18,15 @@ import pl.edu.agh.gem.internal.client.EmailSenderClient
 import pl.edu.agh.gem.internal.client.EmailSenderClientException
 import pl.edu.agh.gem.internal.client.RetryableEmailSenderClientException
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
+import pl.edu.agh.gem.paths.Paths.INTERNAL
 
 @Component
 class RestEmailSenderClient(
-    @Qualifier("EmailSenderClientRestTemplate") val restTemplate: RestTemplate,
+    @Qualifier("EmailSenderClientRestTemplate") private val restTemplate: RestTemplate,
     private val emailSenderClientProperties: EmailSenderClientProperties,
 ) : EmailSenderClient {
 
-    @Retry(name = "default")
+    @Retry(name = "emailSender")
     override fun sendVerificationEmail(verificationEmailDetails: VerificationEmailDetails) {
         try {
             restTemplate.exchange(
@@ -47,7 +48,7 @@ class RestEmailSenderClient(
     }
 
     private fun resolveVerificationAddress() =
-        "${emailSenderClientProperties.url}/internal/verification"
+        "${emailSenderClientProperties.url}/$INTERNAL/verification"
 
     companion object {
         private val logger = KotlinLogging.logger {}

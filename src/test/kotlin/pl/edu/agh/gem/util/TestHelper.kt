@@ -4,12 +4,15 @@ import pl.edu.agh.gem.external.dto.auth.LoginRequest
 import pl.edu.agh.gem.external.dto.auth.RegistrationRequest
 import pl.edu.agh.gem.external.dto.auth.VerificationEmailRequest
 import pl.edu.agh.gem.external.dto.auth.VerificationRequest
+import pl.edu.agh.gem.external.dto.userdetailsmanager.UserDetailsCreationRequest
 import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
 import pl.edu.agh.gem.internal.model.auth.Verification
 import pl.edu.agh.gem.internal.model.auth.VerifiedUser
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
+import pl.edu.agh.gem.internal.model.userdetailsmanager.UserDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
+import pl.edu.agh.gem.util.DummyData.DUMMY_EMAIL
 import java.time.Instant
 import java.time.Instant.now
 
@@ -116,6 +119,22 @@ fun createVerificationEmailRequest(
     email: String = "my@mail.com",
 ) = VerificationEmailRequest(
     email = email,
+)
+
+fun createUserDetails(
+    userId: String = "userId",
+    username: String = "username",
+) = UserDetails(
+    userId = userId,
+    username = username,
+)
+
+fun createUserDetailsCreationRequest(
+    userId: String = "userId",
+    email: String = DUMMY_EMAIL,
+) = UserDetailsCreationRequest(
+    userId = userId,
+    username = email.substringBefore("@"),
 )
 
 object DummyData {

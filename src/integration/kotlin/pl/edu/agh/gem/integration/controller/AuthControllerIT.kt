@@ -31,6 +31,7 @@ import pl.edu.agh.gem.external.dto.auth.VerificationResponse
 import pl.edu.agh.gem.integration.BaseIntegrationSpec
 import pl.edu.agh.gem.integration.ability.ServiceTestClient
 import pl.edu.agh.gem.integration.ability.stubEmailSenderVerification
+import pl.edu.agh.gem.integration.ability.stubUserDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
 import pl.edu.agh.gem.internal.service.DuplicateEmailException
@@ -45,6 +46,7 @@ import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_CODE
 import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_PASSWORD
 import pl.edu.agh.gem.util.createLoginRequest
 import pl.edu.agh.gem.util.createRegistrationRequest
+import pl.edu.agh.gem.util.createUserDetailsCreationRequest
 import pl.edu.agh.gem.util.createVerificationEmailRequest
 import pl.edu.agh.gem.util.createVerificationRequest
 import pl.edu.agh.gem.util.saveNotVerifiedUser
@@ -223,7 +225,7 @@ class AuthControllerIT(
         // given
         val notVerifiedUser = saveNotVerifiedUser(email = DUMMY_EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
         val verificationRequest = createVerificationRequest(email = DUMMY_EMAIL, code = notVerifiedUser.code)
-
+        stubUserDetails(createUserDetailsCreationRequest(notVerifiedUser.id, notVerifiedUser.email))
         // when
         val response = service.verify(verificationRequest)
 

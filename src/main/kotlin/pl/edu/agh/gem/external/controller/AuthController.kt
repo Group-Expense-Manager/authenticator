@@ -20,6 +20,7 @@ import pl.edu.agh.gem.external.dto.auth.VerificationResponse
 import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
 import pl.edu.agh.gem.internal.service.AuthService
 import pl.edu.agh.gem.media.InternalApiMediaType.APPLICATION_JSON_INTERNAL_VER_1
+import pl.edu.agh.gem.paths.Paths.OPEN
 import pl.edu.agh.gem.security.JwtService
 import java.time.Instant.now
 import java.util.UUID.randomUUID
@@ -32,7 +33,7 @@ class AuthController(
     private val authManager: AuthenticationManager,
     private val passwordEncoder: PasswordEncoder,
 ) {
-    @PostMapping("/open/register", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
+    @PostMapping("$OPEN/register", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
     @ResponseStatus(CREATED)
     fun register(
         @Valid @RequestBody
@@ -42,7 +43,7 @@ class AuthController(
     }
 
     @ResponseStatus(OK)
-    @PostMapping("/open/login", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
+    @PostMapping("$OPEN/login", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
     fun login(
         @Valid @RequestBody
         loginRequest: LoginRequest,
@@ -61,7 +62,7 @@ class AuthController(
         )
     }
 
-    @PostMapping("/open/verify", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
+    @PostMapping("$OPEN/verify", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
     @ResponseStatus(OK)
     fun verify(
         @Valid @RequestBody
@@ -74,7 +75,7 @@ class AuthController(
         )
     }
 
-    @PostMapping("/open/send-verification-email", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
+    @PostMapping("$OPEN/send-verification-email", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
     @ResponseStatus(OK)
     fun sendVerificationEmail(
         @Valid @RequestBody

@@ -14,13 +14,38 @@ resilience4j.retry:
         - org.springframework.web.client.HttpServerErrorException
         - java.io.IOException
       ignoreExceptions: []
+    emailSender:
+      maxAttempts: 3
+      waitDuration: 100ms
+      enableExponentialBackoff: true
+      exponentialBackoffMultiplier: 2
+      retryExceptions:
+        - org.springframework.web.client.HttpServerErrorException
+        - java.io.IOException
+        - pl.edu.agh.gem.internal.client.RetryableEmailSenderClientException
+      ignoreExceptions: [ ]
+    userDetailsManager:
+      maxAttempts: 3
+      waitDuration: 100ms
+      enableExponentialBackoff: true
+      exponentialBackoffMultiplier: 2
+      retryExceptions:
+        - org.springframework.web.client.HttpServerErrorException
+        - java.io.IOException
+        - pl.edu.agh.gem.internal.client.RetryableUserDetailsManagerClientException
+      ignoreExceptions: [ ]
 
 token:
   expiration: P90D # 3 months
   secret-key: 8692tg18dEq2twmv48AtiKWp3Qo/2nw6/tU6Rzttm9Q=
 
 email-sender-client:
-  url: "some/url"
+  url: "email/sender/url"
+  read-timeout: 1000ms
+  connect-timeout: 1000ms
+
+user-details-manager-client:
+  url: "user/details/manager/url"
   read-timeout: 1000ms
   connect-timeout: 1000ms
 
