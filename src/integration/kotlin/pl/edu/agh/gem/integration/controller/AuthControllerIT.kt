@@ -1,6 +1,7 @@
 package pl.edu.agh.gem.integration.controller
 
 import io.kotest.datatest.withData
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.CONFLICT
@@ -11,6 +12,7 @@ import org.springframework.http.HttpStatus.OK
 import org.springframework.http.HttpStatus.TOO_MANY_REQUESTS
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.crypto.password.PasswordEncoder
+import pl.edu.agh.gem.assertion.shouldBody
 import pl.edu.agh.gem.assertion.shouldHaveErrors
 import pl.edu.agh.gem.assertion.shouldHaveHttpStatus
 import pl.edu.agh.gem.assertion.shouldHaveValidationError
@@ -24,6 +26,8 @@ import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_NOT_BLANK
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_SPECIAL_CHARACTER
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_UPPERCASE
 import pl.edu.agh.gem.external.dto.ValidationMessage.WRONG_EMAIL_FORMAT
+import pl.edu.agh.gem.external.dto.auth.LoginResponse
+import pl.edu.agh.gem.external.dto.auth.VerificationResponse
 import pl.edu.agh.gem.integration.BaseIntegrationSpec
 import pl.edu.agh.gem.integration.ability.ServiceTestClient
 import pl.edu.agh.gem.integration.ability.stubEmailSenderVerification
@@ -106,7 +110,11 @@ class AuthControllerIT(
     should("login user") {
         // given
         stubEmailSenderVerification()
-        saveVerifiedUser(email = DUMMY_EMAIL, password = passwordEncoder.encode(DUMMY_PASSWORD), verifiedUserRepository = verifiedUserRepository)
+        val verifiedUser = saveVerifiedUser(
+            email = DUMMY_EMAIL,
+            password = passwordEncoder.encode(DUMMY_PASSWORD),
+            verifiedUserRepository = verifiedUserRepository,
+        )
         val loginRequest = createLoginRequest(email = DUMMY_EMAIL, password = DUMMY_PASSWORD)
 
         // when
@@ -114,6 +122,10 @@ class AuthControllerIT(
 
         // then
         response shouldHaveHttpStatus OK
+        response.shouldBody<LoginResponse> {
+            userId shouldBe verifiedUser.id
+            token.shouldNotBeNull()
+        }
     }
 
     should("return validation exception when email is blank") {
@@ -217,6 +229,10 @@ class AuthControllerIT(
 
         // then
         response shouldHaveHttpStatus OK
+        response.shouldBody<VerificationResponse> {
+            userId shouldBe notVerifiedUser.id
+            token.shouldNotBeNull()
+        }
     }
 
     should("return validation exception when code is blank") {

@@ -12,9 +12,11 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import pl.edu.agh.gem.external.dto.auth.LoginRequest
+import pl.edu.agh.gem.external.dto.auth.LoginResponse
 import pl.edu.agh.gem.external.dto.auth.RegistrationRequest
 import pl.edu.agh.gem.external.dto.auth.VerificationEmailRequest
 import pl.edu.agh.gem.external.dto.auth.VerificationRequest
+import pl.edu.agh.gem.external.dto.auth.VerificationResponse
 import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
 import pl.edu.agh.gem.internal.service.AuthService
 import pl.edu.agh.gem.media.InternalApiMediaType.APPLICATION_JSON_INTERNAL_VER_1
@@ -44,7 +46,7 @@ class AuthController(
     fun login(
         @Valid @RequestBody
         loginRequest: LoginRequest,
-    ): String {
+    ): LoginResponse {
         authManager.authenticate(
             UsernamePasswordAuthenticationToken(
                 loginRequest.email,
@@ -53,7 +55,10 @@ class AuthController(
         )
 
         val verifiedUser = authService.getVerifiedUser(loginRequest.email)
-        return jwtService.createToken(verifiedUser)
+        return LoginResponse(
+            verifiedUser.id,
+            jwtService.createToken(verifiedUser),
+        )
     }
 
     @PostMapping("/open/verify", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
@@ -61,9 +66,12 @@ class AuthController(
     fun verify(
         @Valid @RequestBody
         verificationRequest: VerificationRequest,
-    ): String {
+    ): VerificationResponse {
         val verifiedUser = authService.verify(verificationRequest.toDomain())
-        return jwtService.createToken(verifiedUser)
+        return VerificationResponse(
+            verifiedUser.id,
+            jwtService.createToken(verifiedUser),
+        )
     }
 
     @PostMapping("/open/send-verification-email", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
