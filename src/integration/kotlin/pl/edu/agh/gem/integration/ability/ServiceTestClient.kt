@@ -7,6 +7,7 @@ import org.springframework.test.web.servlet.client.MockMvcWebTestClient.bindToAp
 import org.springframework.web.context.WebApplicationContext
 import pl.edu.agh.gem.external.dto.auth.LoginRequest
 import pl.edu.agh.gem.external.dto.auth.PasswordChangeRequest
+import pl.edu.agh.gem.external.dto.auth.PasswordRecoveryRequest
 import pl.edu.agh.gem.external.dto.auth.RegistrationRequest
 import pl.edu.agh.gem.external.dto.auth.VerificationEmailRequest
 import pl.edu.agh.gem.external.dto.auth.VerificationRequest
@@ -60,6 +61,14 @@ class ServiceTestClient(applicationContext: WebApplicationContext) {
         return webClient.put()
             .uri(URI("$EXTERNAL/change-password"))
             .headers { it.withAppContentType().withValidatedUser(gemUser) }
+            .bodyValue(body)
+            .exchange()
+    }
+
+    fun recoverPassword(body: PasswordRecoveryRequest): ResponseSpec {
+        return webClient.post()
+            .uri(URI("$OPEN/recover-password"))
+            .headers { it.withAppContentType() }
             .bodyValue(body)
             .exchange()
     }

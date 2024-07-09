@@ -11,12 +11,13 @@ import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.HttpServerErrorException
 import org.springframework.web.client.RestTemplate
 import pl.edu.agh.gem.config.EmailSenderClientProperties
+import pl.edu.agh.gem.external.dto.emailsender.PasswordRecoveryEmailRequest
 import pl.edu.agh.gem.external.dto.emailsender.VerificationEmailRequest
-import pl.edu.agh.gem.headers.HeadersUtils.withAppAcceptType
 import pl.edu.agh.gem.headers.HeadersUtils.withAppContentType
 import pl.edu.agh.gem.internal.client.EmailSenderClient
 import pl.edu.agh.gem.internal.client.EmailSenderClientException
 import pl.edu.agh.gem.internal.client.RetryableEmailSenderClientException
+import pl.edu.agh.gem.internal.model.emailsender.PasswordRecoveryEmailDetails
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.paths.Paths.INTERNAL
 
@@ -32,7 +33,7 @@ class RestEmailSenderClient(
             restTemplate.exchange(
                 resolveVerificationAddress(),
                 POST,
-                HttpEntity(VerificationEmailRequest.from(verificationEmailDetails), HttpHeaders().withAppAcceptType().withAppContentType()),
+                HttpEntity(VerificationEmailRequest.from(verificationEmailDetails), HttpHeaders().withAppContentType()),
                 Any::class.java,
             )
         } catch (ex: HttpClientErrorException) {
@@ -47,8 +48,31 @@ class RestEmailSenderClient(
         }
     }
 
+    override fun sendPasswordRecoveryEmail(passwordRecoveryEmailDetails: PasswordRecoveryEmailDetails) {
+        try {
+            restTemplate.exchange(
+                resolvePasswordRecoveryAddress(),
+                POST,
+                HttpEntity(PasswordRecoveryEmailRequest.from(passwordRecoveryEmailDetails), HttpHeaders().withAppContentType()),
+                Any::class.java,
+            )
+        } catch (ex: HttpClientErrorException) {
+            logger.warn(ex) { "Client side exception while trying to send recover-password email request: $passwordRecoveryEmailDetails" }
+            throw EmailSenderClientException(ex.message)
+        } catch (ex: HttpServerErrorException) {
+            logger.warn(ex) { "Server side exception while trying to send recover-password email request: $passwordRecoveryEmailDetails" }
+            throw RetryableEmailSenderClientException(ex.message)
+        } catch (ex: Exception) {
+            logger.warn(ex) { "Unexpected exception while trying to send recover-password email request: $passwordRecoveryEmailDetails" }
+            throw EmailSenderClientException(ex.message)
+        }
+    }
+
     private fun resolveVerificationAddress() =
         "${emailSenderClientProperties.url}/$INTERNAL/verification"
+
+    private fun resolvePasswordRecoveryAddress() =
+        "${emailSenderClientProperties.url}/$INTERNAL/recover-password"
 
     companion object {
         private val logger = KotlinLogging.logger {}

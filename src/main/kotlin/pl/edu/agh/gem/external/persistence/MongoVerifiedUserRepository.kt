@@ -13,12 +13,12 @@ class MongoVerifiedUserRepository(
     private val mongo: MongoTemplate,
 ) : VerifiedUserRepository {
     override fun findById(id: String): VerifiedUser? {
-        val query = Query().addCriteria(where(VerifiedUser::id.name).`is`(id))
+        val query = Query().addCriteria(where(VerifiedUserEntity::id.name).`is`(id))
         return mongo.findOne(query, VerifiedUserEntity::class.java)?.toDomain()
     }
 
     override fun findByEmail(email: String): VerifiedUser? {
-        val query = Query().addCriteria(where(VerifiedUser::email.name).`is`(email))
+        val query = Query().addCriteria(where(VerifiedUserEntity::email.name).`is`(email))
         return mongo.findOne(query, VerifiedUserEntity::class.java)?.toDomain()
     }
 

@@ -9,11 +9,23 @@ import pl.edu.agh.gem.headers.HeadersTestUtils.withAppContentType
 import pl.edu.agh.gem.integration.environment.ProjectConfig
 import pl.edu.agh.gem.paths.Paths.INTERNAL
 
-private const val VERIFICATION_URL = "$INTERNAL/verification"
+private fun sendVerificationMailUrl() = "$INTERNAL/verification"
+private fun sendPasswordRecoveryMailUrl() = "$INTERNAL/recover-password"
 
 fun stubEmailSenderVerification(statusCode: HttpStatusCode = HttpStatus.OK) {
     ProjectConfig.wiremock.stubFor(
-        post(urlMatching(VERIFICATION_URL))
+        post(urlMatching(sendVerificationMailUrl()))
+            .willReturn(
+                aResponse()
+                    .withStatus(statusCode.value())
+                    .withAppContentType(),
+            ),
+    )
+}
+
+fun stubEmailSenderPasswordRecovery(statusCode: HttpStatusCode = HttpStatus.OK) {
+    ProjectConfig.wiremock.stubFor(
+        post(urlMatching(sendPasswordRecoveryMailUrl()))
             .willReturn(
                 aResponse()
                     .withStatus(statusCode.value())

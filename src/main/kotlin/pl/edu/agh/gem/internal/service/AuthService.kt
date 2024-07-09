@@ -7,12 +7,16 @@ import org.springframework.transaction.annotation.Transactional
 import pl.edu.agh.gem.internal.client.EmailSenderClient
 import pl.edu.agh.gem.internal.client.UserDetailsManagerClient
 import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
+import pl.edu.agh.gem.internal.model.auth.PasswordRecoveryCode
 import pl.edu.agh.gem.internal.model.auth.Verification
 import pl.edu.agh.gem.internal.model.auth.VerifiedUser
+import pl.edu.agh.gem.internal.model.emailsender.PasswordRecoveryEmailDetails
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.internal.model.userdetailsmanager.UserDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
+import pl.edu.agh.gem.internal.persistence.PasswordRecoveryCodeRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
+import pl.edu.agh.gem.paths.Paths.OPEN
 import java.security.SecureRandom
 import java.time.Duration
 import java.time.Instant.now
@@ -22,9 +26,11 @@ import java.util.stream.Collectors
 class AuthService(
     private val notVerifiedUserRepository: NotVerifiedUserRepository,
     private val verifiedUserRepository: VerifiedUserRepository,
+    private val passwordRecoveryCodeRepository: PasswordRecoveryCodeRepository,
     private val senderClient: EmailSenderClient,
     private val userDetailsManagerClient: UserDetailsManagerClient,
     private val emailProperties: EmailProperties,
+    private val urlProperties: UrlProperties,
     private val passwordEncoder: PasswordEncoder,
 ) {
 
@@ -93,6 +99,24 @@ class AuthService(
     private fun canSendEmail(notVerifiedUser: NotVerifiedUser) =
         notVerifiedUser.codeUpdatedAt.isBefore(now().minus(emailProperties.timeBetweenEmails))
 
+    fun sendPasswordRecoveryEmail(email: String) {
+        val verifiedUser = verifiedUserRepository.findByEmail(email) ?: throw UserNotFoundException()
+
+        if (passwordRecoveryCodeRepository.findByUserId(verifiedUser.id) != null) {
+            throw EmailRecentlySentException()
+        }
+
+        val passwordRecoveryCode = passwordRecoveryCodeRepository.create(
+            PasswordRecoveryCode(
+                userId = verifiedUser.id,
+                code = generateCode(),
+            ),
+        )
+
+        val link = "http://${urlProperties.gemUrl}/$OPEN/send-password?email=$email&code=${passwordRecoveryCode.code}"
+        senderClient.sendPasswordRecoveryEmail(PasswordRecoveryEmailDetails(email, link))
+    }
+
     companion object {
         private const val CODE_LENGTH = 6L
         private const val RANDOM_NUMBER_BOUND = 10
@@ -109,6 +133,11 @@ private fun NotVerifiedUser.toVerified() =
 @ConfigurationProperties(prefix = "email")
 data class EmailProperties(
     val timeBetweenEmails: Duration,
+)
+
+@ConfigurationProperties(prefix = "url")
+data class UrlProperties(
+    val gemUrl: String,
 )
 
 class DuplicateEmailException(email: String) : RuntimeException("Email address $email is already taken")

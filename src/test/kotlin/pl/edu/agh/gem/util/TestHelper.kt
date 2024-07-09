@@ -2,13 +2,17 @@ package pl.edu.agh.gem.util
 
 import pl.edu.agh.gem.external.dto.auth.LoginRequest
 import pl.edu.agh.gem.external.dto.auth.PasswordChangeRequest
+import pl.edu.agh.gem.external.dto.auth.PasswordRecoveryRequest
 import pl.edu.agh.gem.external.dto.auth.RegistrationRequest
 import pl.edu.agh.gem.external.dto.auth.VerificationEmailRequest
 import pl.edu.agh.gem.external.dto.auth.VerificationRequest
 import pl.edu.agh.gem.external.dto.userdetailsmanager.UserDetailsCreationRequest
+import pl.edu.agh.gem.external.persistence.PasswordRecoveryCodeEntity
 import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
+import pl.edu.agh.gem.internal.model.auth.PasswordRecoveryCode
 import pl.edu.agh.gem.internal.model.auth.Verification
 import pl.edu.agh.gem.internal.model.auth.VerifiedUser
+import pl.edu.agh.gem.internal.model.emailsender.PasswordRecoveryEmailDetails
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.internal.model.userdetailsmanager.UserDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
@@ -124,6 +128,15 @@ fun createVerificationEmailRequest(
     email = email,
 )
 
+fun createVerificationEmailDetails(
+    email: String = "my@mail.com",
+    code: String = "123456",
+
+) = VerificationEmailDetails(
+    email = email,
+    code = code,
+)
+
 fun createUserDetails(
     userId: String = "userId",
     username: String = "username",
@@ -146,6 +159,40 @@ fun createPasswordChangeRequest(
 ) = PasswordChangeRequest(
     oldPassword = oldPassword,
     newPassword = newPassword,
+)
+
+fun createPasswordRecoveryEmailDetails(
+    email: String = "my@mail.com",
+    link: String = "link",
+) = PasswordRecoveryEmailDetails(
+    email = email,
+    link = link,
+)
+
+fun createPasswordRecoveryCodeEntity(
+    userId: String = "userId",
+    code: String = "123456",
+    createdAt: Instant = now(),
+) = PasswordRecoveryCodeEntity(
+    userId = userId,
+    code = code,
+    createdAt = createdAt,
+)
+
+fun createPasswordRecoveryCode(
+    userId: String = "userId",
+    code: String = "123456",
+    createdAt: Instant = now(),
+) = PasswordRecoveryCode(
+    userId = userId,
+    code = code,
+    createdAt = createdAt,
+)
+
+fun createPasswordRecoveryRequest(
+    email: String = DUMMY_EMAIL,
+) = PasswordRecoveryRequest(
+    email = email,
 )
 
 object DummyData {

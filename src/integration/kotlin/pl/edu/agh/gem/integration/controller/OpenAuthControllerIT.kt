@@ -30,11 +30,14 @@ import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_UPPERCASE
 import pl.edu.agh.gem.external.dto.ValidationMessage.WRONG_EMAIL_FORMAT
 import pl.edu.agh.gem.external.dto.auth.LoginResponse
 import pl.edu.agh.gem.external.dto.auth.VerificationResponse
+import pl.edu.agh.gem.helper.user.DummyUser.USER_ID
 import pl.edu.agh.gem.integration.BaseIntegrationSpec
 import pl.edu.agh.gem.integration.ability.ServiceTestClient
+import pl.edu.agh.gem.integration.ability.stubEmailSenderPasswordRecovery
 import pl.edu.agh.gem.integration.ability.stubEmailSenderVerification
 import pl.edu.agh.gem.integration.ability.stubUserDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
+import pl.edu.agh.gem.internal.persistence.PasswordRecoveryCodeRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
 import pl.edu.agh.gem.internal.service.DuplicateEmailException
 import pl.edu.agh.gem.internal.service.EmailRecentlySentException
@@ -47,6 +50,8 @@ import pl.edu.agh.gem.util.DummyData.DUMMY_PASSWORD
 import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_CODE
 import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_PASSWORD
 import pl.edu.agh.gem.util.createLoginRequest
+import pl.edu.agh.gem.util.createPasswordRecoveryCode
+import pl.edu.agh.gem.util.createPasswordRecoveryRequest
 import pl.edu.agh.gem.util.createRegistrationRequest
 import pl.edu.agh.gem.util.createUserDetailsCreationRequest
 import pl.edu.agh.gem.util.createVerificationEmailRequest
@@ -60,6 +65,7 @@ class OpenAuthControllerIT(
     private val service: ServiceTestClient,
     private val notVerifiedUserRepository: NotVerifiedUserRepository,
     private val verifiedUserRepository: VerifiedUserRepository,
+    private val passwordRecoveryCodeRepository: PasswordRecoveryCodeRepository,
     private val passwordEncoder: PasswordEncoder,
 ) : BaseIntegrationSpec({
     should("register user") {
@@ -371,5 +377,56 @@ class OpenAuthControllerIT(
         response shouldHaveErrors {
             errors.first().code shouldBe EmailRecentlySentException::class.simpleName
         }
+    }
+
+    should("send password-recovery email") {
+        // given
+        saveVerifiedUser(id = USER_ID, email = DUMMY_EMAIL, verifiedUserRepository = verifiedUserRepository)
+        stubEmailSenderPasswordRecovery()
+
+        // when
+        val response = service.recoverPassword(createPasswordRecoveryRequest(DUMMY_EMAIL))
+
+        // then
+        response shouldHaveHttpStatus OK
+        passwordRecoveryCodeRepository.findByUserId(USER_ID).also {
+            it.shouldNotBeNull()
+        }
+    }
+
+    should("return validation exception when recovering password and email is blank") {
+        // given
+        val passwordRecoveryRequest = createPasswordRecoveryRequest("")
+
+        // when
+        val response = service.recoverPassword(passwordRecoveryRequest)
+
+        // then
+        response shouldHaveHttpStatus BAD_REQUEST
+        response shouldHaveValidationError EMAIL_NOT_BLANK
+    }
+
+    should("return NOT_FOUND when recovering password and user does not exist") {
+        // given
+        val passwordRecoveryRequest = createPasswordRecoveryRequest(DUMMY_EMAIL)
+
+        // when
+        val response = service.recoverPassword(passwordRecoveryRequest)
+
+        // then
+        response shouldHaveHttpStatus NOT_FOUND
+    }
+
+    should("return TOO_MANY_REQUESTS when recovering password and email was recently sent") {
+        // given
+        val passwordRecoveryRequest = createPasswordRecoveryRequest(DUMMY_EMAIL)
+        saveVerifiedUser(id = USER_ID, email = DUMMY_EMAIL, verifiedUserRepository = verifiedUserRepository)
+        passwordRecoveryCodeRepository.create(createPasswordRecoveryCode(USER_ID))
+
+        // when
+        val response = service.recoverPassword(passwordRecoveryRequest)
+
+        // then
+        response shouldHaveHttpStatus TOO_MANY_REQUESTS
     }
 },)

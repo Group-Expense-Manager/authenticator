@@ -5,7 +5,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import pl.edu.agh.gem.util.createEmailDetails
 
-class SendVerificationEmailRequestTest : ShouldSpec({
+class VerificationEmailRequestTest : ShouldSpec({
 
     should("map correct from Verification") {
         // given

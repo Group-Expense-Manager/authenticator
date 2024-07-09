@@ -16,3 +16,6 @@ user-details-manager-client:
 token:
   expiration: P90D # 3 months
   secret-key: ${TOKEN_SECRET_KEY}
+
+url:
+  gem-url: http://${GEM_URL}

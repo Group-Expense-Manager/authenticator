@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import pl.edu.agh.gem.external.dto.auth.LoginRequest
 import pl.edu.agh.gem.external.dto.auth.LoginResponse
+import pl.edu.agh.gem.external.dto.auth.PasswordRecoveryRequest
 import pl.edu.agh.gem.external.dto.auth.RegistrationRequest
 import pl.edu.agh.gem.external.dto.auth.VerificationEmailRequest
 import pl.edu.agh.gem.external.dto.auth.VerificationRequest
@@ -82,6 +83,15 @@ class OpenAuthController(
         verificationEmailRequest: VerificationEmailRequest,
     ) {
         authService.sendVerificationEmail(verificationEmailRequest.email)
+    }
+
+    @PostMapping("recover-password", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
+    @ResponseStatus(OK)
+    fun recoverPassword(
+        @Valid @RequestBody
+        passwordRecoveryRequest: PasswordRecoveryRequest,
+    ) {
+        authService.sendPasswordRecoveryEmail(passwordRecoveryRequest.email)
     }
 
     private fun RegistrationRequest.toDomain() =
