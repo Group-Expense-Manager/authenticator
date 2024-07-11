@@ -99,6 +99,7 @@ class AuthService(
     private fun canSendEmail(notVerifiedUser: NotVerifiedUser) =
         notVerifiedUser.codeUpdatedAt.isBefore(now().minus(emailProperties.timeBetweenEmails))
 
+    @Transactional
     fun sendPasswordRecoveryEmail(email: String) {
         val verifiedUser = verifiedUserRepository.findByEmail(email) ?: throw UserNotFoundException()
 

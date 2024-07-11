@@ -393,6 +393,20 @@ class OpenAuthControllerIT(
             it.shouldNotBeNull()
         }
     }
+    should("rollback when sending password-recovery and sending email fails") {
+        // given
+        saveVerifiedUser(id = USER_ID, email = DUMMY_EMAIL, verifiedUserRepository = verifiedUserRepository)
+        stubEmailSenderPasswordRecovery(INTERNAL_SERVER_ERROR)
+
+        // when
+        val response = service.recoverPassword(createPasswordRecoveryRequest(DUMMY_EMAIL))
+
+        // then
+        response shouldHaveHttpStatus INTERNAL_SERVER_ERROR
+        passwordRecoveryCodeRepository.findByUserId(USER_ID).also {
+            it.shouldBeNull()
+        }
+    }
 
     should("return validation exception when recovering password and email is blank") {
         // given

@@ -21,6 +21,8 @@ import pl.edu.agh.gem.error.withCode
 import pl.edu.agh.gem.error.withDetails
 import pl.edu.agh.gem.error.withMessage
 import pl.edu.agh.gem.error.withUserMessage
+import pl.edu.agh.gem.internal.client.EmailSenderClientException
+import pl.edu.agh.gem.internal.client.RetryableEmailSenderClientException
 import pl.edu.agh.gem.internal.client.RetryableUserDetailsManagerClientException
 import pl.edu.agh.gem.internal.client.UserDetailsManagerClientException
 import pl.edu.agh.gem.internal.service.DuplicateEmailException
@@ -86,6 +88,20 @@ class ApiExceptionHandler {
     @ExceptionHandler(UserDetailsManagerClientException::class)
     fun handleUserDetailsManagerClientException(
         exception: UserDetailsManagerClientException,
+    ): ResponseEntity<SimpleErrorsHolder> {
+        return ResponseEntity(handleError(exception), INTERNAL_SERVER_ERROR)
+    }
+
+    @ExceptionHandler(RetryableEmailSenderClientException::class)
+    fun handleRetryableEmailSenderClientException(
+        exception: RetryableEmailSenderClientException,
+    ): ResponseEntity<SimpleErrorsHolder> {
+        return ResponseEntity(handleError(exception), INTERNAL_SERVER_ERROR)
+    }
+
+    @ExceptionHandler(EmailSenderClientException::class)
+    fun handleEmailSenderClientException(
+        exception: EmailSenderClientException,
     ): ResponseEntity<SimpleErrorsHolder> {
         return ResponseEntity(handleError(exception), INTERNAL_SERVER_ERROR)
     }
