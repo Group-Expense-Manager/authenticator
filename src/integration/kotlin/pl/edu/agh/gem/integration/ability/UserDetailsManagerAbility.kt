@@ -8,7 +8,6 @@ import com.github.tomakehurst.wiremock.client.WireMock.urlMatching
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 import pl.edu.agh.gem.external.dto.userdetailsmanager.UserDetailsCreationRequest
-import pl.edu.agh.gem.headers.HeadersTestUtils.withAppContentType
 import pl.edu.agh.gem.integration.environment.ProjectConfig
 import pl.edu.agh.gem.paths.Paths.INTERNAL
 
@@ -24,8 +23,7 @@ fun stubUserDetails(requestBody: UserDetailsCreationRequest, statusCode: HttpSta
             )
             .willReturn(
                 aResponse()
-                    .withStatus(statusCode.value())
-                    .withAppContentType(),
+                    .withStatus(statusCode.value()),
             ),
     )
 }

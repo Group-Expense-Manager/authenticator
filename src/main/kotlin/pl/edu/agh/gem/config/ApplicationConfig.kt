@@ -10,6 +10,8 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import jakarta.annotation.PostConstruct
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.data.mongodb.MongoDatabaseFactory
+import org.springframework.data.mongodb.MongoTransactionManager
 import org.springframework.web.servlet.LocaleResolver
 import org.springframework.web.servlet.i18n.SessionLocaleResolver
 import pl.edu.agh.gem.locale.LocaleTime.EUROPE_WARSAW
@@ -42,6 +44,11 @@ class ApplicationConfig {
     @PostConstruct
     fun init() {
         TimeZone.setDefault(TimeZone.getTimeZone(EUROPE_WARSAW))
+    }
+
+    @Bean
+    fun transactionManager(dbFactory: MongoDatabaseFactory): MongoTransactionManager {
+        return MongoTransactionManager(dbFactory)
     }
 
     companion object {

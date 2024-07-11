@@ -1,12 +1,14 @@
 package pl.edu.agh.gem.integration.controller
 
 import io.kotest.datatest.withData
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.HttpStatus.CREATED
 import org.springframework.http.HttpStatus.FORBIDDEN
+import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.HttpStatus.OK
 import org.springframework.http.HttpStatus.TOO_MANY_REQUESTS
@@ -234,6 +236,24 @@ class AuthControllerIT(
         response.shouldBody<VerificationResponse> {
             userId shouldBe notVerifiedUser.id
             token.shouldNotBeNull()
+        }
+    }
+
+    should("rollback when verifying user and user details creation fails") {
+        // given
+        val notVerifiedUser = saveNotVerifiedUser(email = DUMMY_EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
+        val verificationRequest = createVerificationRequest(email = DUMMY_EMAIL, code = notVerifiedUser.code)
+        stubUserDetails(createUserDetailsCreationRequest(notVerifiedUser.id, notVerifiedUser.email), INTERNAL_SERVER_ERROR)
+        // when
+        val response = service.verify(verificationRequest)
+
+        // then
+        response shouldHaveHttpStatus INTERNAL_SERVER_ERROR
+        notVerifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+            it.shouldNotBeNull()
+        }
+        verifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+            it.shouldBeNull()
         }
     }
 
