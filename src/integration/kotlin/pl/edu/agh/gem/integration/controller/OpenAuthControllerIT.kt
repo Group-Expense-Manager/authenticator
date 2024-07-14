@@ -56,7 +56,7 @@ import pl.edu.agh.gem.util.saveVerifiedUser
 import java.time.Instant.now
 import java.time.temporal.ChronoUnit.MINUTES
 
-class AuthControllerIT(
+class OpenAuthControllerIT(
     private val service: ServiceTestClient,
     private val notVerifiedUserRepository: NotVerifiedUserRepository,
     private val verifiedUserRepository: VerifiedUserRepository,

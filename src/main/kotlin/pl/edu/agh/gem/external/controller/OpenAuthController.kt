@@ -26,14 +26,14 @@ import java.time.Instant.now
 import java.util.UUID.randomUUID
 
 @RestController
-@RequestMapping
-class AuthController(
+@RequestMapping(OPEN)
+class OpenAuthController(
     private val authService: AuthService,
     private val jwtService: JwtService,
     private val authManager: AuthenticationManager,
     private val passwordEncoder: PasswordEncoder,
 ) {
-    @PostMapping("$OPEN/register", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
+    @PostMapping("register", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
     @ResponseStatus(CREATED)
     fun register(
         @Valid @RequestBody
@@ -43,7 +43,7 @@ class AuthController(
     }
 
     @ResponseStatus(OK)
-    @PostMapping("$OPEN/login", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
+    @PostMapping("login", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
     fun login(
         @Valid @RequestBody
         loginRequest: LoginRequest,
@@ -62,7 +62,7 @@ class AuthController(
         )
     }
 
-    @PostMapping("$OPEN/verify", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
+    @PostMapping("verify", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
     @ResponseStatus(OK)
     fun verify(
         @Valid @RequestBody
@@ -75,7 +75,7 @@ class AuthController(
         )
     }
 
-    @PostMapping("$OPEN/send-verification-email", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
+    @PostMapping("send-verification-email", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
     @ResponseStatus(OK)
     fun sendVerificationEmail(
         @Valid @RequestBody

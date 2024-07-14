@@ -1,6 +1,7 @@
 package pl.edu.agh.gem.util
 
 import pl.edu.agh.gem.external.dto.auth.LoginRequest
+import pl.edu.agh.gem.external.dto.auth.PasswordChangeRequest
 import pl.edu.agh.gem.external.dto.auth.RegistrationRequest
 import pl.edu.agh.gem.external.dto.auth.VerificationEmailRequest
 import pl.edu.agh.gem.external.dto.auth.VerificationRequest
@@ -13,6 +14,8 @@ import pl.edu.agh.gem.internal.model.userdetailsmanager.UserDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
 import pl.edu.agh.gem.util.DummyData.DUMMY_EMAIL
+import pl.edu.agh.gem.util.DummyData.DUMMY_PASSWORD
+import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_PASSWORD
 import java.time.Instant
 import java.time.Instant.now
 
@@ -135,6 +138,14 @@ fun createUserDetailsCreationRequest(
 ) = UserDetailsCreationRequest(
     userId = userId,
     username = email.substringBefore("@"),
+)
+
+fun createPasswordChangeRequest(
+    oldPassword: String = DUMMY_PASSWORD,
+    newPassword: String = OTHER_DUMMY_PASSWORD,
+) = PasswordChangeRequest(
+    oldPassword = oldPassword,
+    newPassword = newPassword,
 )
 
 object DummyData {
