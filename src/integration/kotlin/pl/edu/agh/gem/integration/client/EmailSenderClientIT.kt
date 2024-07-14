@@ -14,6 +14,7 @@ class EmailSenderClientIT(
 ) : BaseIntegrationSpec({
     should("send verification email") {
         // given
+
         stubEmailSenderVerification()
 
         // when & then
