@@ -4,6 +4,7 @@ import io.kotest.datatest.withData
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.HttpStatus.CREATED
@@ -33,6 +34,7 @@ import pl.edu.agh.gem.external.dto.auth.VerificationResponse
 import pl.edu.agh.gem.helper.user.DummyUser.USER_ID
 import pl.edu.agh.gem.integration.BaseIntegrationSpec
 import pl.edu.agh.gem.integration.ability.ServiceTestClient
+import pl.edu.agh.gem.integration.ability.stubEmailSenderPassword
 import pl.edu.agh.gem.integration.ability.stubEmailSenderPasswordRecovery
 import pl.edu.agh.gem.integration.ability.stubEmailSenderVerification
 import pl.edu.agh.gem.integration.ability.stubUserDetails
@@ -56,6 +58,7 @@ import pl.edu.agh.gem.util.createRegistrationRequest
 import pl.edu.agh.gem.util.createUserDetailsCreationRequest
 import pl.edu.agh.gem.util.createVerificationEmailRequest
 import pl.edu.agh.gem.util.createVerificationRequest
+import pl.edu.agh.gem.util.createVerifiedUser
 import pl.edu.agh.gem.util.saveNotVerifiedUser
 import pl.edu.agh.gem.util.saveVerifiedUser
 import java.time.Instant.now
@@ -442,5 +445,104 @@ class OpenAuthControllerIT(
 
         // then
         response shouldHaveHttpStatus TOO_MANY_REQUESTS
+    }
+
+    should("send password email") {
+        // given
+        val verifiedUser = createVerifiedUser(id = USER_ID, email = DUMMY_EMAIL)
+        verifiedUserRepository.create(verifiedUser)
+        val passwordRecoveryCode = createPasswordRecoveryCode(userId = USER_ID, code = DUMMY_CODE)
+        passwordRecoveryCodeRepository.create(passwordRecoveryCode)
+
+        stubEmailSenderPassword()
+
+        // when
+        val response = service.sendPassword(email = DUMMY_EMAIL, code = DUMMY_CODE)
+
+        // then
+        response shouldHaveHttpStatus OK
+        passwordRecoveryCodeRepository.findByUserId(USER_ID).also {
+            it.shouldBeNull()
+        }
+
+        verifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+            it.shouldNotBeNull()
+            it.password shouldNotBe verifiedUser.password
+        }
+    }
+
+    should("should rollback when sending password email and EmailSenderFails") {
+        // given
+        val verifiedUser = createVerifiedUser(id = USER_ID, email = DUMMY_EMAIL)
+        verifiedUserRepository.create(verifiedUser)
+        val passwordRecoveryCode = createPasswordRecoveryCode(userId = USER_ID, code = DUMMY_CODE)
+        passwordRecoveryCodeRepository.create(passwordRecoveryCode)
+
+        stubEmailSenderPassword(statusCode = INTERNAL_SERVER_ERROR)
+
+        // when
+        val response = service.sendPassword(email = DUMMY_EMAIL, code = DUMMY_CODE)
+
+        // then
+        response shouldHaveHttpStatus INTERNAL_SERVER_ERROR
+        passwordRecoveryCodeRepository.findByUserId(USER_ID).also {
+            it.shouldNotBeNull()
+        }
+
+        verifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+            it.shouldNotBeNull()
+            it.password shouldBe verifiedUser.password
+        }
+    }
+
+    should("return NOT_FOUND when sending password and user does not exist ") {
+        // given
+        stubEmailSenderPassword()
+
+        // when
+        val response = service.sendPassword(email = DUMMY_EMAIL, code = DUMMY_CODE)
+
+        // then
+        response shouldHaveHttpStatus NOT_FOUND
+    }
+
+    should("return FORBIDDEN when sending password and passwordRecoveryCode does not exist ") {
+        // given
+        stubEmailSenderPassword()
+        val verifiedUser = createVerifiedUser(id = USER_ID, email = DUMMY_EMAIL)
+        verifiedUserRepository.create(verifiedUser)
+
+        // when
+        val response = service.sendPassword(email = DUMMY_EMAIL, code = DUMMY_CODE)
+
+        // then
+        response shouldHaveHttpStatus FORBIDDEN
+
+        verifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+            it.shouldNotBeNull()
+            it.password shouldBe verifiedUser.password
+        }
+    }
+
+    should("return BAD_REQUEST when sending password and code is not correct") {
+        // given
+        stubEmailSenderPassword()
+        val verifiedUser = createVerifiedUser(id = USER_ID, email = DUMMY_EMAIL)
+        verifiedUserRepository.create(verifiedUser)
+        val passwordRecoveryCode = createPasswordRecoveryCode(userId = USER_ID, code = DUMMY_CODE)
+        passwordRecoveryCodeRepository.create(passwordRecoveryCode)
+
+        // when
+        val response = service.sendPassword(email = DUMMY_EMAIL, code = OTHER_DUMMY_CODE)
+
+        // then
+        response shouldHaveHttpStatus BAD_REQUEST
+        passwordRecoveryCodeRepository.findByUserId(USER_ID).also {
+            it.shouldNotBeNull()
+        }
+        verifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+            it.shouldNotBeNull()
+            it.password shouldBe verifiedUser.password
+        }
     }
 },)

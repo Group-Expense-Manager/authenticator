@@ -12,12 +12,14 @@ import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.HttpServerErrorException
 import org.springframework.web.client.RestTemplate
 import pl.edu.agh.gem.config.EmailSenderClientProperties
+import pl.edu.agh.gem.external.dto.emailsender.PasswordEmailRequest
 import pl.edu.agh.gem.external.dto.emailsender.PasswordRecoveryEmailRequest
 import pl.edu.agh.gem.external.dto.emailsender.VerificationEmailRequest
 import pl.edu.agh.gem.headers.HeadersUtils.withAppContentType
 import pl.edu.agh.gem.internal.client.EmailSenderClient
 import pl.edu.agh.gem.internal.client.EmailSenderClientException
 import pl.edu.agh.gem.internal.client.RetryableEmailSenderClientException
+import pl.edu.agh.gem.internal.model.emailsender.PasswordEmailDetails
 import pl.edu.agh.gem.internal.model.emailsender.PasswordRecoveryEmailDetails
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.paths.Paths.INTERNAL
@@ -73,6 +75,26 @@ class RestEmailSenderClient(
         }
     }
 
+    override fun sendPassword(passwordEmailDetails: PasswordEmailDetails) {
+        try {
+            restTemplate.exchange(
+                resolvePasswordAddress(),
+                POST,
+                HttpEntity(PasswordEmailRequest.from(passwordEmailDetails), HttpHeaders().withAppContentType()),
+                Any::class.java,
+            )
+        } catch (ex: HttpClientErrorException) {
+            logger.warn(ex) { "Client side exception while trying to send password email request: $passwordEmailDetails" }
+            throw EmailSenderClientException(ex.message)
+        } catch (ex: HttpServerErrorException) {
+            logger.warn(ex) { "Server side exception while trying to send password email request: $passwordEmailDetails" }
+            throw RetryableEmailSenderClientException(ex.message)
+        } catch (ex: Exception) {
+            logger.warn(ex) { "Unexpected exception while trying to send password email request: $passwordEmailDetails" }
+            throw EmailSenderClientException(ex.message)
+        }
+    }
+
     private fun generateLink(email: String, code: String) = "http://${urlProperties.gemUrl}/$OPEN/send-password?email=$email&code=$code"
 
     private fun resolveVerificationAddress() =
@@ -80,6 +102,9 @@ class RestEmailSenderClient(
 
     private fun resolvePasswordRecoveryAddress() =
         "${emailSenderClientProperties.url}/$INTERNAL/recover-password"
+
+    private fun resolvePasswordAddress() =
+        "${emailSenderClientProperties.url}/$INTERNAL/password"
 
     companion object {
         private val logger = KotlinLogging.logger {}

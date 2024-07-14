@@ -10,6 +10,7 @@ import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
 import pl.edu.agh.gem.internal.model.auth.PasswordRecoveryCode
 import pl.edu.agh.gem.internal.model.auth.Verification
 import pl.edu.agh.gem.internal.model.auth.VerifiedUser
+import pl.edu.agh.gem.internal.model.emailsender.PasswordEmailDetails
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.internal.model.userdetailsmanager.UserDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
@@ -113,9 +114,41 @@ class AuthService(
         senderClient.sendPasswordRecoveryEmail(email, passwordRecoveryCode.code)
     }
 
+    @Transactional
+    fun sendPasswordEmail(email: String, code: String) {
+        val verifiedUser = verifiedUserRepository.findByEmail(email) ?: throw UserNotFoundException()
+        val passwordRecoveryCode = passwordRecoveryCodeRepository.findByUserId(verifiedUser.id) ?: throw PasswordRecoveryCodeExpirationException()
+        if (passwordRecoveryCode.code != code) {
+            throw WrongPasswordRecoveryCodeException()
+        }
+
+        val newPassword = generatePassword()
+        verifiedUserRepository.updatePassword(verifiedUser.id, newPassword)
+        passwordRecoveryCodeRepository.deleteByUserId(verifiedUser.id)
+        senderClient.sendPassword(PasswordEmailDetails(email, newPassword))
+    }
+
+    private fun generatePassword(): String {
+        val allChars = LOWERCASE + UPPERCASE + DIGITS + SPECIAL_CHARACTERS
+        val initialPassword = (LOWERCASE.random().toString() + UPPERCASE.random() + DIGITS.random() + SPECIAL_CHARACTERS.random())
+        val remainingLength = GENERATED_PASSWORD_LENGTH - initialPassword.length
+
+        return buildString {
+            append(initialPassword)
+            repeat(remainingLength) {
+                append(allChars.random())
+            }
+        }
+    }
+
     companion object {
         private const val CODE_LENGTH = 6L
         private const val RANDOM_NUMBER_BOUND = 10
+        private const val GENERATED_PASSWORD_LENGTH = 30
+        private const val LOWERCASE = "abcdefghijklmnopqrstuvwxyz"
+        private const val UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        private const val DIGITS = "0123456789"
+        private const val SPECIAL_CHARACTERS = "@#$%^&+=!"
     }
 }
 
@@ -137,3 +170,5 @@ class UserNotFoundException : RuntimeException("User not found")
 class VerificationException(email: String) : RuntimeException("Verification failed for $email")
 class EmailRecentlySentException : RuntimeException("Email was recently sent, please wait 5 minutes")
 class WrongPasswordException : RuntimeException("Wrong password")
+class PasswordRecoveryCodeExpirationException : RuntimeException("This password-recovery link has been expired")
+class WrongPasswordRecoveryCodeException : RuntimeException("Wrong password recovery code")

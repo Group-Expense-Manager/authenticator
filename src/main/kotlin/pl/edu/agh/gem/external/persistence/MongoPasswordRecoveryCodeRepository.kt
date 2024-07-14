@@ -20,6 +20,11 @@ class MongoPasswordRecoveryCodeRepository(
         return mongo.findOne(query, PasswordRecoveryCodeEntity::class.java)?.toDomain()
     }
 
+    override fun deleteByUserId(userId: String) {
+        val query = Query().addCriteria(where(PasswordRecoveryCodeEntity::userId.name).`is`(userId))
+        mongo.remove(query, PasswordRecoveryCodeEntity::class.java)
+    }
+
     private fun PasswordRecoveryCode.toEntity() = PasswordRecoveryCodeEntity(
         userId = userId,
         code = code,

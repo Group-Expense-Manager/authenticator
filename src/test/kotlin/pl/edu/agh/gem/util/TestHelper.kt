@@ -12,6 +12,7 @@ import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
 import pl.edu.agh.gem.internal.model.auth.PasswordRecoveryCode
 import pl.edu.agh.gem.internal.model.auth.Verification
 import pl.edu.agh.gem.internal.model.auth.VerifiedUser
+import pl.edu.agh.gem.internal.model.emailsender.PasswordEmailDetails
 import pl.edu.agh.gem.internal.model.emailsender.PasswordRecoveryEmailDetails
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.internal.model.userdetailsmanager.UserDetails
@@ -193,6 +194,14 @@ fun createPasswordRecoveryRequest(
     email: String = DUMMY_EMAIL,
 ) = PasswordRecoveryRequest(
     email = email,
+)
+
+fun createPasswordEmailDetails(
+    email: String = "my@mail.com",
+    password: String = "password",
+) = PasswordEmailDetails(
+    email = email,
+    password = password,
 )
 
 object DummyData {

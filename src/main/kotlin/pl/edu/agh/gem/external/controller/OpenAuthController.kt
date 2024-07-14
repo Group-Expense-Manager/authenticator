@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import pl.edu.agh.gem.external.dto.auth.LoginRequest
@@ -94,6 +95,14 @@ class OpenAuthController(
         authService.sendPasswordRecoveryEmail(passwordRecoveryRequest.email)
     }
 
+    @PostMapping("send-password")
+    @ResponseStatus(OK)
+    fun sendPassword(
+        @RequestParam email: String,
+        @RequestParam code: String,
+    ) {
+        authService.sendPasswordEmail(email, code)
+    }
     private fun RegistrationRequest.toDomain() =
         NotVerifiedUser(
             id = randomUUID().toString(),
