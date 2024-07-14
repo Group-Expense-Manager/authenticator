@@ -10,13 +10,11 @@ import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
 import pl.edu.agh.gem.internal.model.auth.PasswordRecoveryCode
 import pl.edu.agh.gem.internal.model.auth.Verification
 import pl.edu.agh.gem.internal.model.auth.VerifiedUser
-import pl.edu.agh.gem.internal.model.emailsender.PasswordRecoveryEmailDetails
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.internal.model.userdetailsmanager.UserDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.PasswordRecoveryCodeRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
-import pl.edu.agh.gem.paths.Paths.OPEN
 import java.security.SecureRandom
 import java.time.Duration
 import java.time.Instant.now
@@ -30,7 +28,6 @@ class AuthService(
     private val senderClient: EmailSenderClient,
     private val userDetailsManagerClient: UserDetailsManagerClient,
     private val emailProperties: EmailProperties,
-    private val urlProperties: UrlProperties,
     private val passwordEncoder: PasswordEncoder,
 ) {
 
@@ -113,9 +110,7 @@ class AuthService(
                 code = generateCode(),
             ),
         )
-
-        val link = "http://${urlProperties.gemUrl}/$OPEN/send-password?email=$email&code=${passwordRecoveryCode.code}"
-        senderClient.sendPasswordRecoveryEmail(PasswordRecoveryEmailDetails(email, link))
+        senderClient.sendPasswordRecoveryEmail(email, passwordRecoveryCode.code)
     }
 
     companion object {
@@ -134,11 +129,6 @@ private fun NotVerifiedUser.toVerified() =
 @ConfigurationProperties(prefix = "email")
 data class EmailProperties(
     val timeBetweenEmails: Duration,
-)
-
-@ConfigurationProperties(prefix = "url")
-data class UrlProperties(
-    val gemUrl: String,
 )
 
 class DuplicateEmailException(email: String) : RuntimeException("Email address $email is already taken")

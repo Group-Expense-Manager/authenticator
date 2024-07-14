@@ -15,7 +15,6 @@ import pl.edu.agh.gem.helper.user.DummyUser.USER_ID
 import pl.edu.agh.gem.internal.client.EmailSenderClient
 import pl.edu.agh.gem.internal.client.UserDetailsManagerClient
 import pl.edu.agh.gem.internal.model.auth.PasswordRecoveryCode
-import pl.edu.agh.gem.internal.model.emailsender.PasswordRecoveryEmailDetails
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.internal.model.userdetailsmanager.UserDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
@@ -41,7 +40,6 @@ class AuthServiceTest : ShouldSpec(
         val passwordRecoveryCodeRepository = mock<PasswordRecoveryCodeRepository>()
         val emailSenderClient = mock<EmailSenderClient>()
         val emailProperties = mock<EmailProperties>()
-        val urlProperties = mock<UrlProperties>()
         val userDetailsManagerClient = mock<UserDetailsManagerClient>()
         val passwordEncoder = mock<PasswordEncoder>()
 
@@ -52,7 +50,6 @@ class AuthServiceTest : ShouldSpec(
             emailSenderClient,
             userDetailsManagerClient,
             emailProperties,
-            urlProperties,
             passwordEncoder,
 
         )
@@ -255,7 +252,6 @@ class AuthServiceTest : ShouldSpec(
             whenever(verifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(verifiedUser)
             whenever(passwordRecoveryCodeRepository.findByUserId(USER_ID)).thenReturn(null)
             whenever(passwordRecoveryCodeRepository.create(anyVararg(PasswordRecoveryCode::class))).thenReturn(passwordRecoveryCode)
-            whenever(urlProperties.gemUrl).thenReturn("localhost")
             // when
             authService.sendPasswordRecoveryEmail(DUMMY_EMAIL)
 
@@ -263,7 +259,7 @@ class AuthServiceTest : ShouldSpec(
             verify(verifiedUserRepository, times(1)).findByEmail(DUMMY_EMAIL)
             verify(passwordRecoveryCodeRepository, times(1)).findByUserId(USER_ID)
             verify(passwordRecoveryCodeRepository, times(1)).create(anyVararg(PasswordRecoveryCode::class))
-            verify(emailSenderClient, times(1)).sendPasswordRecoveryEmail(anyVararg(PasswordRecoveryEmailDetails::class))
+            verify(emailSenderClient, times(1)).sendPasswordRecoveryEmail(anyVararg(String::class), anyVararg(String::class))
         }
 
         should("throw UserNotFoundException when sending password recovery mail and user doesn't exist") {
@@ -276,7 +272,7 @@ class AuthServiceTest : ShouldSpec(
             verify(verifiedUserRepository, times(1)).findByEmail(DUMMY_EMAIL)
             verify(passwordRecoveryCodeRepository, times(0)).findByUserId(USER_ID)
             verify(passwordRecoveryCodeRepository, times(0)).create(anyVararg(PasswordRecoveryCode::class))
-            verify(emailSenderClient, times(0)).sendPasswordRecoveryEmail(anyVararg(PasswordRecoveryEmailDetails::class))
+            verify(emailSenderClient, times(0)).sendPasswordRecoveryEmail(anyVararg(String::class), anyVararg(String::class))
         }
 
         should("throw EmailRecentlySentException when sending password recovery mail and email was recently sent") {
@@ -292,7 +288,7 @@ class AuthServiceTest : ShouldSpec(
             verify(verifiedUserRepository, times(1)).findByEmail(DUMMY_EMAIL)
             verify(passwordRecoveryCodeRepository, times(1)).findByUserId(USER_ID)
             verify(passwordRecoveryCodeRepository, times(0)).create(anyVararg(PasswordRecoveryCode::class))
-            verify(emailSenderClient, times(0)).sendPasswordRecoveryEmail(anyVararg(PasswordRecoveryEmailDetails::class))
+            verify(emailSenderClient, times(0)).sendPasswordRecoveryEmail(anyVararg(String::class), anyVararg(String::class))
         }
     },
 )

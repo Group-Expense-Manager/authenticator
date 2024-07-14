@@ -5,7 +5,8 @@ import pl.edu.agh.gem.integration.BaseIntegrationSpec
 import pl.edu.agh.gem.integration.ability.stubEmailSenderPasswordRecovery
 import pl.edu.agh.gem.integration.ability.stubEmailSenderVerification
 import pl.edu.agh.gem.internal.client.EmailSenderClient
-import pl.edu.agh.gem.util.createPasswordRecoveryEmailDetails
+import pl.edu.agh.gem.util.DummyData.DUMMY_CODE
+import pl.edu.agh.gem.util.DummyData.DUMMY_EMAIL
 import pl.edu.agh.gem.util.createVerificationEmailDetails
 
 class EmailSenderClientIT(
@@ -13,6 +14,7 @@ class EmailSenderClientIT(
 ) : BaseIntegrationSpec({
     should("send verification email") {
         // given
+
         stubEmailSenderVerification()
 
         // when & then
@@ -27,7 +29,7 @@ class EmailSenderClientIT(
 
         // when & then
         shouldNotThrowAny {
-            emailSenderClient.sendPasswordRecoveryEmail(createPasswordRecoveryEmailDetails())
+            emailSenderClient.sendPasswordRecoveryEmail(DUMMY_EMAIL, DUMMY_CODE)
         }
     }
 },)

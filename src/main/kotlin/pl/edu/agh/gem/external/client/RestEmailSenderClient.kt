@@ -3,6 +3,7 @@ package pl.edu.agh.gem.external.client
 import io.github.resilience4j.retry.annotation.Retry
 import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod.POST
@@ -20,11 +21,14 @@ import pl.edu.agh.gem.internal.client.RetryableEmailSenderClientException
 import pl.edu.agh.gem.internal.model.emailsender.PasswordRecoveryEmailDetails
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.paths.Paths.INTERNAL
+import pl.edu.agh.gem.paths.Paths.OPEN
 
 @Component
 class RestEmailSenderClient(
     @Qualifier("EmailSenderClientRestTemplate") private val restTemplate: RestTemplate,
     private val emailSenderClientProperties: EmailSenderClientProperties,
+    private val urlProperties: UrlProperties,
+
 ) : EmailSenderClient {
 
     @Retry(name = "emailSender")
@@ -48,7 +52,8 @@ class RestEmailSenderClient(
         }
     }
 
-    override fun sendPasswordRecoveryEmail(passwordRecoveryEmailDetails: PasswordRecoveryEmailDetails) {
+    override fun sendPasswordRecoveryEmail(email: String, code: String) {
+        val passwordRecoveryEmailDetails = PasswordRecoveryEmailDetails(email, generateLink(email, code))
         try {
             restTemplate.exchange(
                 resolvePasswordRecoveryAddress(),
@@ -68,6 +73,8 @@ class RestEmailSenderClient(
         }
     }
 
+    private fun generateLink(email: String, code: String) = "http://${urlProperties.gemUrl}/$OPEN/send-password?email=$email&code=$code"
+
     private fun resolveVerificationAddress() =
         "${emailSenderClientProperties.url}/$INTERNAL/verification"
 
@@ -78,3 +85,8 @@ class RestEmailSenderClient(
         private val logger = KotlinLogging.logger {}
     }
 }
+
+@ConfigurationProperties(prefix = "url")
+data class UrlProperties(
+    val gemUrl: String,
+)
