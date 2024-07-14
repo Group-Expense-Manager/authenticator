@@ -1,12 +1,14 @@
 package pl.edu.agh.gem.integration.controller
 
 import io.kotest.datatest.withData
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.HttpStatus.CREATED
 import org.springframework.http.HttpStatus.FORBIDDEN
+import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.HttpStatus.OK
 import org.springframework.http.HttpStatus.TOO_MANY_REQUESTS
@@ -31,6 +33,7 @@ import pl.edu.agh.gem.external.dto.auth.VerificationResponse
 import pl.edu.agh.gem.integration.BaseIntegrationSpec
 import pl.edu.agh.gem.integration.ability.ServiceTestClient
 import pl.edu.agh.gem.integration.ability.stubEmailSenderVerification
+import pl.edu.agh.gem.integration.ability.stubUserDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
 import pl.edu.agh.gem.internal.service.DuplicateEmailException
@@ -45,6 +48,7 @@ import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_CODE
 import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_PASSWORD
 import pl.edu.agh.gem.util.createLoginRequest
 import pl.edu.agh.gem.util.createRegistrationRequest
+import pl.edu.agh.gem.util.createUserDetailsCreationRequest
 import pl.edu.agh.gem.util.createVerificationEmailRequest
 import pl.edu.agh.gem.util.createVerificationRequest
 import pl.edu.agh.gem.util.saveNotVerifiedUser
@@ -223,7 +227,7 @@ class AuthControllerIT(
         // given
         val notVerifiedUser = saveNotVerifiedUser(email = DUMMY_EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
         val verificationRequest = createVerificationRequest(email = DUMMY_EMAIL, code = notVerifiedUser.code)
-
+        stubUserDetails(createUserDetailsCreationRequest(notVerifiedUser.id, notVerifiedUser.email))
         // when
         val response = service.verify(verificationRequest)
 
@@ -232,6 +236,24 @@ class AuthControllerIT(
         response.shouldBody<VerificationResponse> {
             userId shouldBe notVerifiedUser.id
             token.shouldNotBeNull()
+        }
+    }
+
+    should("rollback when verifying user and user details creation fails") {
+        // given
+        val notVerifiedUser = saveNotVerifiedUser(email = DUMMY_EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
+        val verificationRequest = createVerificationRequest(email = DUMMY_EMAIL, code = notVerifiedUser.code)
+        stubUserDetails(createUserDetailsCreationRequest(notVerifiedUser.id, notVerifiedUser.email), INTERNAL_SERVER_ERROR)
+        // when
+        val response = service.verify(verificationRequest)
+
+        // then
+        response shouldHaveHttpStatus INTERNAL_SERVER_ERROR
+        notVerifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+            it.shouldNotBeNull()
+        }
+        verifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+            it.shouldBeNull()
         }
     }
 

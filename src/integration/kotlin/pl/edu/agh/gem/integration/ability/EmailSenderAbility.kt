@@ -7,8 +7,9 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 import pl.edu.agh.gem.headers.HeadersTestUtils.withAppContentType
 import pl.edu.agh.gem.integration.environment.ProjectConfig
+import pl.edu.agh.gem.paths.Paths.INTERNAL
 
-private const val VERIFICATION_URL = "/internal/verification"
+private const val VERIFICATION_URL = "$INTERNAL/verification"
 
 fun stubEmailSenderVerification(statusCode: HttpStatusCode = HttpStatus.OK) {
     ProjectConfig.wiremock.stubFor(

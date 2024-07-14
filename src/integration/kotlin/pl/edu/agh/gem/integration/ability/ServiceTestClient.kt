@@ -10,6 +10,7 @@ import pl.edu.agh.gem.external.dto.auth.RegistrationRequest
 import pl.edu.agh.gem.external.dto.auth.VerificationEmailRequest
 import pl.edu.agh.gem.external.dto.auth.VerificationRequest
 import pl.edu.agh.gem.headers.HeadersUtils.withAppContentType
+import pl.edu.agh.gem.paths.Paths.OPEN
 import java.net.URI
 
 @Component
@@ -21,7 +22,7 @@ class ServiceTestClient(applicationContext: WebApplicationContext) {
 
     fun register(body: RegistrationRequest): ResponseSpec {
         return webClient.post()
-            .uri(URI("/open/register"))
+            .uri(URI("$OPEN/register"))
             .headers { it.withAppContentType() }
             .bodyValue(body)
             .exchange()
@@ -29,7 +30,7 @@ class ServiceTestClient(applicationContext: WebApplicationContext) {
 
     fun login(body: LoginRequest): ResponseSpec {
         return webClient.post()
-            .uri(URI("/open/login"))
+            .uri(URI("$OPEN/login"))
             .headers { it.withAppContentType() }
             .bodyValue(body)
             .exchange()
@@ -37,7 +38,7 @@ class ServiceTestClient(applicationContext: WebApplicationContext) {
 
     fun verify(body: VerificationRequest): ResponseSpec {
         return webClient.post()
-            .uri(URI("/open/verify"))
+            .uri(URI("$OPEN/verify"))
             .headers { it.withAppContentType() }
             .bodyValue(body)
             .exchange()
@@ -45,7 +46,7 @@ class ServiceTestClient(applicationContext: WebApplicationContext) {
 
     fun sendVerificationEmail(body: VerificationEmailRequest): ResponseSpec {
         return webClient.post()
-            .uri(URI("/open/send-verification-email"))
+            .uri(URI("$OPEN/send-verification-email"))
             .headers { it.withAppContentType() }
             .bodyValue(body)
             .exchange()

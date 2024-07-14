@@ -4,10 +4,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import pl.edu.agh.gem.internal.client.EmailSenderClient
+import pl.edu.agh.gem.internal.client.UserDetailsManagerClient
 import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
 import pl.edu.agh.gem.internal.model.auth.Verification
 import pl.edu.agh.gem.internal.model.auth.VerifiedUser
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
+import pl.edu.agh.gem.internal.model.userdetailsmanager.UserDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
 import java.security.SecureRandom
@@ -20,6 +22,7 @@ class AuthService(
     private val notVerifiedUserRepository: NotVerifiedUserRepository,
     private val verifiedUserRepository: VerifiedUserRepository,
     private val senderClient: EmailSenderClient,
+    private val userDetailsManagerClient: UserDetailsManagerClient,
     private val emailProperties: EmailProperties,
 ) {
 
@@ -54,8 +57,15 @@ class AuthService(
             throw VerificationException(notVerifiedUser.email)
         }
         notVerifiedUserRepository.deleteById(notVerifiedUser.id)
-        return verifiedUserRepository.create(notVerifiedUser.toVerified())
+        val verifiedUser = verifiedUserRepository.create(notVerifiedUser.toVerified())
+        userDetailsManagerClient.createUserDetails(getUserDetails(verifiedUser))
+        return verifiedUser
     }
+
+    private fun getUserDetails(verifiedUser: VerifiedUser) = UserDetails(
+        userId = verifiedUser.id,
+        username = verifiedUser.email.substringBefore("@"),
+    )
 
     fun sendVerificationEmail(email: String) {
         val notVerifiedUser = notVerifiedUserRepository.findByEmail(email) ?: throw UserNotFoundException()

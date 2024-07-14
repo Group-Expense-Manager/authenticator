@@ -6,6 +6,7 @@ import org.springframework.core.annotation.Order
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.HttpStatus.FORBIDDEN
+import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.HttpStatus.TOO_MANY_REQUESTS
 import org.springframework.http.ResponseEntity
@@ -20,6 +21,8 @@ import pl.edu.agh.gem.error.withCode
 import pl.edu.agh.gem.error.withDetails
 import pl.edu.agh.gem.error.withMessage
 import pl.edu.agh.gem.error.withUserMessage
+import pl.edu.agh.gem.internal.client.RetryableUserDetailsManagerClientException
+import pl.edu.agh.gem.internal.client.UserDetailsManagerClientException
 import pl.edu.agh.gem.internal.service.DuplicateEmailException
 import pl.edu.agh.gem.internal.service.EmailRecentlySentException
 import pl.edu.agh.gem.internal.service.UserNotFoundException
@@ -65,6 +68,20 @@ class ApiExceptionHandler {
         exception: MethodArgumentNotValidException,
     ): ResponseEntity<SimpleErrorsHolder> {
         return ResponseEntity(handleNotValidException(exception), BAD_REQUEST)
+    }
+
+    @ExceptionHandler(RetryableUserDetailsManagerClientException::class)
+    fun handleRetryableUserDetailsManagerClientException(
+        exception: RetryableUserDetailsManagerClientException,
+    ): ResponseEntity<SimpleErrorsHolder> {
+        return ResponseEntity(handleError(exception), INTERNAL_SERVER_ERROR)
+    }
+
+    @ExceptionHandler(UserDetailsManagerClientException::class)
+    fun handleUserDetailsManagerClientException(
+        exception: UserDetailsManagerClientException,
+    ): ResponseEntity<SimpleErrorsHolder> {
+        return ResponseEntity(handleError(exception), INTERNAL_SERVER_ERROR)
     }
 
     private fun handleNotValidException(exception: MethodArgumentNotValidException): SimpleErrorsHolder {

@@ -19,10 +19,28 @@ class ClientConfig {
             .setReadTimeout(emailSenderClientProperties.readTimeout)
             .build()
     }
+
+    @Bean
+    @Qualifier("UserDetailsManagerClientRestTemplate")
+    fun userDetailsManagerClientRestTemplate(
+        userDetailsManagerClientProperties: UserDetailsManagerClientProperties,
+    ): RestTemplate {
+        return RestTemplateBuilder()
+            .setConnectTimeout(userDetailsManagerClientProperties.connectTimeout)
+            .setReadTimeout(userDetailsManagerClientProperties.readTimeout)
+            .build()
+    }
 }
 
 @ConfigurationProperties(prefix = "email-sender-client")
 data class EmailSenderClientProperties(
+    val url: String,
+    val connectTimeout: Duration,
+    val readTimeout: Duration,
+)
+
+@ConfigurationProperties(prefix = "user-details-manager-client")
+data class UserDetailsManagerClientProperties(
     val url: String,
     val connectTimeout: Duration,
     val readTimeout: Duration,

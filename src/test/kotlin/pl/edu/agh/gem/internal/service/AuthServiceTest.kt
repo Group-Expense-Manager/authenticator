@@ -11,8 +11,9 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import pl.edu.agh.gem.internal.client.EmailSenderClient
-import pl.edu.agh.gem.internal.model.auth.VerifiedUser
+import pl.edu.agh.gem.internal.client.UserDetailsManagerClient
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
+import pl.edu.agh.gem.internal.model.userdetailsmanager.UserDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
 import pl.edu.agh.gem.util.DummyData.DUMMY_CODE
@@ -31,10 +32,12 @@ class AuthServiceTest : ShouldSpec(
         val verifiedUserRepository = mock<VerifiedUserRepository>()
         val emailSenderClient = mock<EmailSenderClient>()
         val emailProperties = mock<EmailProperties>()
+        val userDetailsManagerClient = mock<UserDetailsManagerClient>()
         val authService = AuthService(
             notVerifiedUserRepository,
             verifiedUserRepository,
             emailSenderClient,
+            userDetailsManagerClient,
             emailProperties,
         )
 
@@ -111,7 +114,10 @@ class AuthServiceTest : ShouldSpec(
             // given
             val verification = createVerification(DUMMY_EMAIL, DUMMY_CODE)
             val notVerifiedUser = createNotVerifiedUser(email = DUMMY_EMAIL, code = DUMMY_CODE)
+            val verifiedUser = createVerifiedUser(id = notVerifiedUser.id, email = notVerifiedUser.email, password = notVerifiedUser.password)
+
             whenever(notVerifiedUserRepository.findByEmail(verification.email)).thenReturn(notVerifiedUser)
+            whenever(verifiedUserRepository.create(verifiedUser)).thenReturn(verifiedUser)
 
             // when
             authService.verify(verification)
@@ -119,7 +125,8 @@ class AuthServiceTest : ShouldSpec(
             // then
             verify(notVerifiedUserRepository, times(1)).findByEmail(DUMMY_EMAIL)
             verify(notVerifiedUserRepository, times(1)).deleteById(notVerifiedUser.id)
-            verify(verifiedUserRepository, times(1)).create(anyVararg(VerifiedUser::class))
+            verify(verifiedUserRepository, times(1)).create(verifiedUser)
+            verify(userDetailsManagerClient, times(1)).createUserDetails(anyVararg(UserDetails::class))
         }
 
         should("throw UserNotFoundException when verifying user and user does not exist") {

@@ -8,6 +8,11 @@ email-sender-client:
   read-timeout: 10000ms
   connect-timeout: 1000ms
 
+user-details-manager-client:
+  url: http://${USER_DETAILS_MANAGER_SERVICE_SERVICE_HOST}:8080
+  read-timeout: 1000ms
+  connect-timeout: 1000ms
+
 token:
   expiration: P90D # 3 months
   secret-key: ${TOKEN_SECRET_KEY}
