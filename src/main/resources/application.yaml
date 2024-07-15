@@ -51,3 +51,7 @@ user-details-manager-client:
 
 email:
   time-between-emails: PT5M
+
+url:
+  gem-url: http://gem.web.authenticator.com
+

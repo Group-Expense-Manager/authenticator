@@ -14,9 +14,11 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import pl.edu.agh.gem.helper.user.DummyUser.USER_ID
 import pl.edu.agh.gem.internal.client.EmailSenderClient
 import pl.edu.agh.gem.internal.client.UserDetailsManagerClient
+import pl.edu.agh.gem.internal.model.auth.PasswordRecoveryCode
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.internal.model.userdetailsmanager.UserDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
+import pl.edu.agh.gem.internal.persistence.PasswordRecoveryCodeRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
 import pl.edu.agh.gem.util.DummyData.DUMMY_CODE
 import pl.edu.agh.gem.util.DummyData.DUMMY_EMAIL
@@ -24,6 +26,7 @@ import pl.edu.agh.gem.util.DummyData.DUMMY_PASSWORD
 import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_CODE
 import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_PASSWORD
 import pl.edu.agh.gem.util.createNotVerifiedUser
+import pl.edu.agh.gem.util.createPasswordRecoveryCode
 import pl.edu.agh.gem.util.createVerification
 import pl.edu.agh.gem.util.createVerifiedUser
 import java.time.Duration
@@ -34,6 +37,7 @@ class AuthServiceTest : ShouldSpec(
     {
         val notVerifiedUserRepository = mock<NotVerifiedUserRepository>()
         val verifiedUserRepository = mock<VerifiedUserRepository>()
+        val passwordRecoveryCodeRepository = mock<PasswordRecoveryCodeRepository>()
         val emailSenderClient = mock<EmailSenderClient>()
         val emailProperties = mock<EmailProperties>()
         val userDetailsManagerClient = mock<UserDetailsManagerClient>()
@@ -42,6 +46,7 @@ class AuthServiceTest : ShouldSpec(
         val authService = AuthService(
             notVerifiedUserRepository,
             verifiedUserRepository,
+            passwordRecoveryCodeRepository,
             emailSenderClient,
             userDetailsManagerClient,
             emailProperties,
@@ -238,6 +243,52 @@ class AuthServiceTest : ShouldSpec(
             verify(verifiedUserRepository, times(1)).findById(USER_ID)
             verify(passwordEncoder, times(1)).matches(anyVararg(String::class), anyVararg(String::class))
             verify(verifiedUserRepository, times(0)).updatePassword(USER_ID, OTHER_DUMMY_PASSWORD)
+        }
+
+        should("send password-recovery email") {
+            // given
+            val verifiedUser = createVerifiedUser(id = USER_ID, email = DUMMY_EMAIL)
+            val passwordRecoveryCode = createPasswordRecoveryCode(userId = USER_ID)
+            whenever(verifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(verifiedUser)
+            whenever(passwordRecoveryCodeRepository.findByUserId(USER_ID)).thenReturn(null)
+            whenever(passwordRecoveryCodeRepository.create(anyVararg(PasswordRecoveryCode::class))).thenReturn(passwordRecoveryCode)
+            // when
+            authService.sendPasswordRecoveryEmail(DUMMY_EMAIL)
+
+            // then
+            verify(verifiedUserRepository, times(1)).findByEmail(DUMMY_EMAIL)
+            verify(passwordRecoveryCodeRepository, times(1)).findByUserId(USER_ID)
+            verify(passwordRecoveryCodeRepository, times(1)).create(anyVararg(PasswordRecoveryCode::class))
+            verify(emailSenderClient, times(1)).sendPasswordRecoveryEmail(anyVararg(String::class), anyVararg(String::class))
+        }
+
+        should("throw UserNotFoundException when sending password recovery mail and user doesn't exist") {
+            // given
+            whenever(verifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(null)
+
+            // when & then
+            shouldThrowExactly<UserNotFoundException> { authService.sendPasswordRecoveryEmail(DUMMY_EMAIL) }
+
+            verify(verifiedUserRepository, times(1)).findByEmail(DUMMY_EMAIL)
+            verify(passwordRecoveryCodeRepository, times(0)).findByUserId(USER_ID)
+            verify(passwordRecoveryCodeRepository, times(0)).create(anyVararg(PasswordRecoveryCode::class))
+            verify(emailSenderClient, times(0)).sendPasswordRecoveryEmail(anyVararg(String::class), anyVararg(String::class))
+        }
+
+        should("throw EmailRecentlySentException when sending password recovery mail and email was recently sent") {
+            // given
+            val verifiedUser = createVerifiedUser(id = USER_ID, email = DUMMY_EMAIL)
+            val passwordRecoveryCode = createPasswordRecoveryCode(userId = USER_ID)
+            whenever(verifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(verifiedUser)
+            whenever(passwordRecoveryCodeRepository.findByUserId(USER_ID)).thenReturn(passwordRecoveryCode)
+
+            // when & then
+            shouldThrowExactly<EmailRecentlySentException> { authService.sendPasswordRecoveryEmail(DUMMY_EMAIL) }
+
+            verify(verifiedUserRepository, times(1)).findByEmail(DUMMY_EMAIL)
+            verify(passwordRecoveryCodeRepository, times(1)).findByUserId(USER_ID)
+            verify(passwordRecoveryCodeRepository, times(0)).create(anyVararg(PasswordRecoveryCode::class))
+            verify(emailSenderClient, times(0)).sendPasswordRecoveryEmail(anyVararg(String::class), anyVararg(String::class))
         }
     },
 )
