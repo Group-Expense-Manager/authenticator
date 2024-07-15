@@ -11,6 +11,7 @@ import pl.edu.agh.gem.paths.Paths.INTERNAL
 
 private fun sendVerificationMailUrl() = "$INTERNAL/verification"
 private fun sendPasswordRecoveryMailUrl() = "$INTERNAL/recover-password"
+private fun sendPasswordMailUrl() = "$INTERNAL/password"
 
 fun stubEmailSenderVerification(statusCode: HttpStatusCode = HttpStatus.OK) {
     ProjectConfig.wiremock.stubFor(
@@ -26,6 +27,17 @@ fun stubEmailSenderVerification(statusCode: HttpStatusCode = HttpStatus.OK) {
 fun stubEmailSenderPasswordRecovery(statusCode: HttpStatusCode = HttpStatus.OK) {
     ProjectConfig.wiremock.stubFor(
         post(urlMatching(sendPasswordRecoveryMailUrl()))
+            .willReturn(
+                aResponse()
+                    .withStatus(statusCode.value())
+                    .withAppContentType(),
+            ),
+    )
+}
+
+fun stubEmailSenderPassword(statusCode: HttpStatusCode = HttpStatus.OK) {
+    ProjectConfig.wiremock.stubFor(
+        post(urlMatching(sendPasswordMailUrl()))
             .willReturn(
                 aResponse()
                     .withStatus(statusCode.value())

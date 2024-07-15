@@ -1,10 +1,12 @@
 package pl.edu.agh.gem.internal.client
 
+import pl.edu.agh.gem.internal.model.emailsender.PasswordEmailDetails
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 
 interface EmailSenderClient {
     fun sendVerificationEmail(verificationEmailDetails: VerificationEmailDetails)
     fun sendPasswordRecoveryEmail(email: String, code: String)
+    fun sendPassword(passwordEmailDetails: PasswordEmailDetails)
 }
 
 class EmailSenderClientException(override val message: String?) : RuntimeException()

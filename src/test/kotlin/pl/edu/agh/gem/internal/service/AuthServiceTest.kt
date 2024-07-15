@@ -6,6 +6,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldHaveLength
 import io.kotest.matchers.string.shouldMatch
 import org.mockito.kotlin.anyVararg
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
@@ -15,6 +16,7 @@ import pl.edu.agh.gem.helper.user.DummyUser.USER_ID
 import pl.edu.agh.gem.internal.client.EmailSenderClient
 import pl.edu.agh.gem.internal.client.UserDetailsManagerClient
 import pl.edu.agh.gem.internal.model.auth.PasswordRecoveryCode
+import pl.edu.agh.gem.internal.model.emailsender.PasswordEmailDetails
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 import pl.edu.agh.gem.internal.model.userdetailsmanager.UserDetails
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
@@ -289,6 +291,81 @@ class AuthServiceTest : ShouldSpec(
             verify(passwordRecoveryCodeRepository, times(1)).findByUserId(USER_ID)
             verify(passwordRecoveryCodeRepository, times(0)).create(anyVararg(PasswordRecoveryCode::class))
             verify(emailSenderClient, times(0)).sendPasswordRecoveryEmail(anyVararg(String::class), anyVararg(String::class))
+        }
+
+        should("send email with password") {
+            // given
+            val verifiedUser = createVerifiedUser(id = USER_ID, email = DUMMY_EMAIL)
+            val passwordRecoveryCode = createPasswordRecoveryCode(userId = USER_ID, code = DUMMY_CODE)
+            whenever(verifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(verifiedUser)
+            whenever(passwordRecoveryCodeRepository.findByUserId(USER_ID)).thenReturn(passwordRecoveryCode)
+
+            // when
+            authService.sendPasswordEmail(DUMMY_EMAIL, DUMMY_CODE)
+
+            // then
+            verify(verifiedUserRepository, times(1)).findByEmail(DUMMY_EMAIL)
+            verify(passwordRecoveryCodeRepository, times(1)).findByUserId(USER_ID)
+
+            verify(verifiedUserRepository, times(1)).updatePassword(eq(USER_ID), anyVararg(String::class))
+            verify(passwordRecoveryCodeRepository, times(1)).deleteByUserId(USER_ID)
+            verify(emailSenderClient, times(1)).sendPassword(anyVararg(PasswordEmailDetails::class))
+        }
+
+        should("throw UserNotFound when sending email with password and user does not exist") {
+            // given
+            whenever(verifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(null)
+
+            // when & then
+            shouldThrowExactly<UserNotFoundException> {
+                authService.sendPasswordEmail(DUMMY_EMAIL, DUMMY_CODE)
+            }
+
+            verify(verifiedUserRepository, times(1)).findByEmail(DUMMY_EMAIL)
+            verify(passwordRecoveryCodeRepository, times(0)).findByUserId(USER_ID)
+
+            verify(verifiedUserRepository, times(0)).updatePassword(anyVararg(String::class), anyVararg(String::class))
+            verify(passwordRecoveryCodeRepository, times(0)).deleteByUserId(anyVararg(String::class))
+            verify(emailSenderClient, times(0)).sendPassword(anyVararg(PasswordEmailDetails::class))
+        }
+
+        should("throw PasswordRecoveryCodeExpirationException when sending email with password and PasswordRecoveryCode does not exist") {
+            // given
+            val verifiedUser = createVerifiedUser(id = USER_ID, email = DUMMY_EMAIL)
+            whenever(verifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(verifiedUser)
+            whenever(passwordRecoveryCodeRepository.findByUserId(USER_ID)).thenReturn(null)
+
+            // when & then
+            shouldThrowExactly<PasswordRecoveryCodeExpirationException> {
+                authService.sendPasswordEmail(DUMMY_EMAIL, DUMMY_CODE)
+            }
+
+            verify(verifiedUserRepository, times(1)).findByEmail(DUMMY_EMAIL)
+            verify(passwordRecoveryCodeRepository, times(1)).findByUserId(USER_ID)
+
+            verify(verifiedUserRepository, times(0)).updatePassword(anyVararg(String::class), anyVararg(String::class))
+            verify(passwordRecoveryCodeRepository, times(0)).deleteByUserId(anyVararg(String::class))
+            verify(emailSenderClient, times(0)).sendPassword(anyVararg(PasswordEmailDetails::class))
+        }
+
+        should("throw WrongPasswordRecoveryCodeException when sending email with password and code is not correct") {
+            // given
+            val verifiedUser = createVerifiedUser(id = USER_ID, email = DUMMY_EMAIL)
+            val passwordRecoveryCode = createPasswordRecoveryCode(userId = USER_ID, code = DUMMY_CODE)
+            whenever(verifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(verifiedUser)
+            whenever(passwordRecoveryCodeRepository.findByUserId(USER_ID)).thenReturn(passwordRecoveryCode)
+
+            // when & then
+            shouldThrowExactly<WrongPasswordRecoveryCodeException> {
+                authService.sendPasswordEmail(DUMMY_EMAIL, OTHER_DUMMY_CODE)
+            }
+
+            verify(verifiedUserRepository, times(1)).findByEmail(DUMMY_EMAIL)
+            verify(passwordRecoveryCodeRepository, times(1)).findByUserId(USER_ID)
+
+            verify(verifiedUserRepository, times(0)).updatePassword(anyVararg(String::class), anyVararg(String::class))
+            verify(passwordRecoveryCodeRepository, times(0)).deleteByUserId(anyVararg(String::class))
+            verify(emailSenderClient, times(0)).sendPassword(anyVararg(PasswordEmailDetails::class))
         }
     },
 )
