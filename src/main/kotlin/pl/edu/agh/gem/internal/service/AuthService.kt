@@ -32,6 +32,7 @@ class AuthService(
     private val passwordEncoder: PasswordEncoder,
 ) {
 
+    @Transactional
     fun create(notVerifiedUser: NotVerifiedUser) {
         if (isEmailTaken(notVerifiedUser.email)) {
             throw DuplicateEmailException(notVerifiedUser.email)
@@ -73,6 +74,7 @@ class AuthService(
         username = verifiedUser.email.substringBefore("@"),
     )
 
+    @Transactional
     fun sendVerificationEmail(email: String) {
         val notVerifiedUser = notVerifiedUserRepository.findByEmail(email) ?: throw UserNotFoundException()
 
@@ -80,8 +82,8 @@ class AuthService(
             throw EmailRecentlySentException()
         }
         val newCode = generateCode()
-        senderClient.sendVerificationEmail(VerificationEmailDetails(notVerifiedUser.email, newCode))
         notVerifiedUserRepository.updateVerificationCode(notVerifiedUser.id, newCode)
+        senderClient.sendVerificationEmail(VerificationEmailDetails(notVerifiedUser.email, newCode))
     }
 
     fun changePassword(userId: String, oldPassword: String, newPassword: String) {
@@ -116,14 +118,14 @@ class AuthService(
 
     @Transactional
     fun sendPasswordEmail(email: String, code: String) {
-        val verifiedUser = verifiedUserRepository.findByEmail(email) ?: throw UserNotFoundException()
-        val passwordRecoveryCode = passwordRecoveryCodeRepository.findByUserId(verifiedUser.id) ?: throw PasswordRecoveryCodeExpirationException()
+        val verifiedUser = verifiedUserRepository.findByEmail(email) ?: throw PasswordRecoveryException()
+        val passwordRecoveryCode = passwordRecoveryCodeRepository.findByUserId(verifiedUser.id) ?: throw PasswordRecoveryException()
         if (passwordRecoveryCode.code != code) {
-            throw WrongPasswordRecoveryCodeException()
+            throw PasswordRecoveryException()
         }
 
         val newPassword = generatePassword()
-        verifiedUserRepository.updatePassword(verifiedUser.id, newPassword)
+        verifiedUserRepository.updatePassword(verifiedUser.id, passwordEncoder.encode(newPassword))
         passwordRecoveryCodeRepository.deleteByUserId(verifiedUser.id)
         senderClient.sendPassword(PasswordEmailDetails(email, newPassword))
     }
@@ -170,5 +172,4 @@ class UserNotFoundException : RuntimeException("User not found")
 class VerificationException(email: String) : RuntimeException("Verification failed for $email")
 class EmailRecentlySentException : RuntimeException("Email was recently sent, please wait 5 minutes")
 class WrongPasswordException : RuntimeException("Wrong password")
-class PasswordRecoveryCodeExpirationException : RuntimeException("This password-recovery link has been expired")
-class WrongPasswordRecoveryCodeException : RuntimeException("Wrong password recovery code")
+class PasswordRecoveryException : RuntimeException("Invalid password recovery link")

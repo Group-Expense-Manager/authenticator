@@ -95,7 +95,7 @@ class RestEmailSenderClient(
         }
     }
 
-    private fun generateLink(email: String, code: String) = "http://${urlProperties.gemUrl}/$OPEN/send-password?email=$email&code=$code"
+    private fun generateLink(email: String, code: String) = "http://${urlProperties.gemUrl}$OPEN/send-password?email=$email&code=$code"
 
     private fun resolveVerificationAddress() =
         "${emailSenderClientProperties.url}/$INTERNAL/verification"

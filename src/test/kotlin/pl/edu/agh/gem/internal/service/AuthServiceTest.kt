@@ -295,10 +295,12 @@ class AuthServiceTest : ShouldSpec(
 
         should("send email with password") {
             // given
+            val newEncodedPassword = "encoded"
             val verifiedUser = createVerifiedUser(id = USER_ID, email = DUMMY_EMAIL)
             val passwordRecoveryCode = createPasswordRecoveryCode(userId = USER_ID, code = DUMMY_CODE)
             whenever(verifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(verifiedUser)
             whenever(passwordRecoveryCodeRepository.findByUserId(USER_ID)).thenReturn(passwordRecoveryCode)
+            whenever(passwordEncoder.encode(anyVararg(String::class))).thenReturn(newEncodedPassword)
 
             // when
             authService.sendPasswordEmail(DUMMY_EMAIL, DUMMY_CODE)
@@ -309,15 +311,16 @@ class AuthServiceTest : ShouldSpec(
 
             verify(verifiedUserRepository, times(1)).updatePassword(eq(USER_ID), anyVararg(String::class))
             verify(passwordRecoveryCodeRepository, times(1)).deleteByUserId(USER_ID)
+            verify(passwordEncoder, times(1)).encode(anyVararg(String::class))
             verify(emailSenderClient, times(1)).sendPassword(anyVararg(PasswordEmailDetails::class))
         }
 
-        should("throw UserNotFound when sending email with password and user does not exist") {
+        should("throw PasswordRecoveryException when sending email with password and user does not exist") {
             // given
             whenever(verifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(null)
 
             // when & then
-            shouldThrowExactly<UserNotFoundException> {
+            shouldThrowExactly<PasswordRecoveryException> {
                 authService.sendPasswordEmail(DUMMY_EMAIL, DUMMY_CODE)
             }
 
@@ -329,14 +332,14 @@ class AuthServiceTest : ShouldSpec(
             verify(emailSenderClient, times(0)).sendPassword(anyVararg(PasswordEmailDetails::class))
         }
 
-        should("throw PasswordRecoveryCodeExpirationException when sending email with password and PasswordRecoveryCode does not exist") {
+        should("throw PasswordRecoveryException when sending email with password and PasswordRecoveryCode does not exist") {
             // given
             val verifiedUser = createVerifiedUser(id = USER_ID, email = DUMMY_EMAIL)
             whenever(verifiedUserRepository.findByEmail(DUMMY_EMAIL)).thenReturn(verifiedUser)
             whenever(passwordRecoveryCodeRepository.findByUserId(USER_ID)).thenReturn(null)
 
             // when & then
-            shouldThrowExactly<PasswordRecoveryCodeExpirationException> {
+            shouldThrowExactly<PasswordRecoveryException> {
                 authService.sendPasswordEmail(DUMMY_EMAIL, DUMMY_CODE)
             }
 
@@ -348,7 +351,7 @@ class AuthServiceTest : ShouldSpec(
             verify(emailSenderClient, times(0)).sendPassword(anyVararg(PasswordEmailDetails::class))
         }
 
-        should("throw WrongPasswordRecoveryCodeException when sending email with password and code is not correct") {
+        should("throw PasswordRecoveryException when sending email with password and code is not correct") {
             // given
             val verifiedUser = createVerifiedUser(id = USER_ID, email = DUMMY_EMAIL)
             val passwordRecoveryCode = createPasswordRecoveryCode(userId = USER_ID, code = DUMMY_CODE)
@@ -356,7 +359,7 @@ class AuthServiceTest : ShouldSpec(
             whenever(passwordRecoveryCodeRepository.findByUserId(USER_ID)).thenReturn(passwordRecoveryCode)
 
             // when & then
-            shouldThrowExactly<WrongPasswordRecoveryCodeException> {
+            shouldThrowExactly<PasswordRecoveryException> {
                 authService.sendPasswordEmail(DUMMY_EMAIL, OTHER_DUMMY_CODE)
             }
 
