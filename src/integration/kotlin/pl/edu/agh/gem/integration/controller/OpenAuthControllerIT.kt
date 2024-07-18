@@ -32,13 +32,16 @@ import pl.edu.agh.gem.external.dto.ValidationMessage.USERNAME_PATTERN_MESSAGE
 import pl.edu.agh.gem.external.dto.ValidationMessage.WRONG_EMAIL_FORMAT
 import pl.edu.agh.gem.external.dto.auth.LoginResponse
 import pl.edu.agh.gem.external.dto.auth.VerificationResponse
+import pl.edu.agh.gem.external.dto.userdetailsmanager.toInternalUsernameResponse
+import pl.edu.agh.gem.helper.user.DummyUser.EMAIL
 import pl.edu.agh.gem.helper.user.DummyUser.USER_ID
 import pl.edu.agh.gem.integration.BaseIntegrationSpec
 import pl.edu.agh.gem.integration.ability.ServiceTestClient
 import pl.edu.agh.gem.integration.ability.stubEmailSenderPassword
 import pl.edu.agh.gem.integration.ability.stubEmailSenderPasswordRecovery
 import pl.edu.agh.gem.integration.ability.stubEmailSenderVerification
-import pl.edu.agh.gem.integration.ability.stubUserDetails
+import pl.edu.agh.gem.integration.ability.stubGetUsername
+import pl.edu.agh.gem.integration.ability.stubUserDetailsCreation
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.PasswordRecoveryCodeRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
@@ -48,8 +51,8 @@ import pl.edu.agh.gem.internal.service.UserNotFoundException
 import pl.edu.agh.gem.internal.service.UserNotVerifiedException
 import pl.edu.agh.gem.internal.service.VerificationException
 import pl.edu.agh.gem.util.DummyData.DUMMY_CODE
-import pl.edu.agh.gem.util.DummyData.DUMMY_EMAIL
 import pl.edu.agh.gem.util.DummyData.DUMMY_PASSWORD
+import pl.edu.agh.gem.util.DummyData.DUMMY_USERNAME
 import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_CODE
 import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_PASSWORD
 import pl.edu.agh.gem.util.createLoginRequest
@@ -76,29 +79,30 @@ class OpenAuthControllerIT(
     should("register user") {
         // given
         stubEmailSenderVerification()
-        val registrationRequest = createRegistrationRequest(email = DUMMY_EMAIL)
+        val registrationRequest = createRegistrationRequest(username = DUMMY_USERNAME, email = EMAIL)
 
         // when
         val response = service.register(registrationRequest)
 
         // then
         response shouldHaveHttpStatus CREATED
-        notVerifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+        notVerifiedUserRepository.findByEmail(EMAIL).also {
             it.shouldNotBeNull()
+            it.username shouldBe DUMMY_USERNAME
         }
     }
-    
+
     should("rollback when registering user and emailSenderFails") {
         // given
         stubEmailSenderVerification(INTERNAL_SERVER_ERROR)
-        val registrationRequest = createRegistrationRequest(email = DUMMY_EMAIL)
+        val registrationRequest = createRegistrationRequest(email = EMAIL)
 
         // when
         val response = service.register(registrationRequest)
 
         // then
         response shouldHaveHttpStatus INTERNAL_SERVER_ERROR
-        notVerifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+        notVerifiedUserRepository.findByEmail(EMAIL).also {
             it.shouldBeNull()
         }
     }
@@ -106,11 +110,11 @@ class OpenAuthControllerIT(
     context("return validation exception cause:") {
         withData(
             nameFn = { it.first },
-                Pair(USERNAME_PATTERN_MESSAGE, createRegistrationRequest(username = "")),
-                Pair(USERNAME_PATTERN_MESSAGE, createRegistrationRequest(username = "oo")),
-                Pair(USERNAME_PATTERN_MESSAGE, createRegistrationRequest(username = "ooooooooooooooooooooo")),
-                Pair(USERNAME_PATTERN_MESSAGE, createRegistrationRequest(username = "user$#")),
-                Pair(EMAIL_NOT_BLANK, createRegistrationRequest(email = "")),
+            Pair(USERNAME_PATTERN_MESSAGE, createRegistrationRequest(username = "")),
+            Pair(USERNAME_PATTERN_MESSAGE, createRegistrationRequest(username = "oo")),
+            Pair(USERNAME_PATTERN_MESSAGE, createRegistrationRequest(username = "ooooooooooooooooooooo")),
+            Pair(USERNAME_PATTERN_MESSAGE, createRegistrationRequest(username = "user$#")),
+            Pair(EMAIL_NOT_BLANK, createRegistrationRequest(email = "")),
             Pair(WRONG_EMAIL_FORMAT, createRegistrationRequest(email = "email")),
             Pair(PASSWORD_NOT_BLANK, createRegistrationRequest(password = "")),
             Pair(MIN_PASSWORD_LENGTH, createRegistrationRequest(password = "pswd")),
@@ -131,8 +135,8 @@ class OpenAuthControllerIT(
 
     should("return DuplicateEmailException when user with given email already exists") {
         // given
-        val registrationRequest = createRegistrationRequest(email = DUMMY_EMAIL)
-        saveNotVerifiedUser(email = DUMMY_EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
+        val registrationRequest = createRegistrationRequest(email = EMAIL)
+        saveNotVerifiedUser(email = EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
 
         // when
         val response = service.register(registrationRequest)
@@ -148,11 +152,11 @@ class OpenAuthControllerIT(
         // given
         stubEmailSenderVerification()
         val verifiedUser = saveVerifiedUser(
-            email = DUMMY_EMAIL,
+            email = EMAIL,
             password = passwordEncoder.encode(DUMMY_PASSWORD),
             verifiedUserRepository = verifiedUserRepository,
         )
-        val loginRequest = createLoginRequest(email = DUMMY_EMAIL, password = DUMMY_PASSWORD)
+        val loginRequest = createLoginRequest(email = EMAIL, password = DUMMY_PASSWORD)
 
         // when
         val response = service.login(loginRequest)
@@ -192,11 +196,11 @@ class OpenAuthControllerIT(
     should("return UserNotVerifiedException when user is not verified") {
         // given
         saveNotVerifiedUser(
-            email = DUMMY_EMAIL,
+            email = EMAIL,
             password = passwordEncoder.encode(DUMMY_PASSWORD),
             notVerifiedUserRepository = notVerifiedUserRepository,
         )
-        val loginRequest = createLoginRequest(email = DUMMY_EMAIL, password = DUMMY_PASSWORD)
+        val loginRequest = createLoginRequest(email = EMAIL, password = DUMMY_PASSWORD)
 
         // when
         val response = service.login(loginRequest)
@@ -224,8 +228,8 @@ class OpenAuthControllerIT(
 
     should("return BadCredentialsException when password is not correct for verified user") {
         // given
-        saveVerifiedUser(email = DUMMY_EMAIL, password = passwordEncoder.encode(DUMMY_PASSWORD), verifiedUserRepository = verifiedUserRepository)
-        val loginRequest = createLoginRequest(email = DUMMY_EMAIL, password = OTHER_DUMMY_PASSWORD)
+        saveVerifiedUser(email = EMAIL, password = passwordEncoder.encode(DUMMY_PASSWORD), verifiedUserRepository = verifiedUserRepository)
+        val loginRequest = createLoginRequest(email = EMAIL, password = OTHER_DUMMY_PASSWORD)
 
         // when
         val response = service.login(loginRequest)
@@ -240,11 +244,11 @@ class OpenAuthControllerIT(
     should("return BadCredentialsException when password is not correct for not verified user") {
         // given
         saveNotVerifiedUser(
-            email = DUMMY_EMAIL,
+            email = EMAIL,
             password = passwordEncoder.encode(DUMMY_PASSWORD),
             notVerifiedUserRepository = notVerifiedUserRepository,
         )
-        val loginRequest = createLoginRequest(email = DUMMY_EMAIL, password = OTHER_DUMMY_PASSWORD)
+        val loginRequest = createLoginRequest(email = EMAIL, password = OTHER_DUMMY_PASSWORD)
 
         // when
         val response = service.login(loginRequest)
@@ -258,9 +262,9 @@ class OpenAuthControllerIT(
 
     should("Verify code") {
         // given
-        val notVerifiedUser = saveNotVerifiedUser(email = DUMMY_EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
-        val verificationRequest = createVerificationRequest(email = DUMMY_EMAIL, code = notVerifiedUser.code)
-        stubUserDetails(createUserDetailsCreationRequest(notVerifiedUser.id, notVerifiedUser.email))
+        val notVerifiedUser = saveNotVerifiedUser(email = EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
+        val verificationRequest = createVerificationRequest(email = EMAIL, code = notVerifiedUser.code)
+        stubUserDetailsCreation(createUserDetailsCreationRequest(notVerifiedUser.id, notVerifiedUser.username))
         // when
         val response = service.verify(verificationRequest)
 
@@ -270,28 +274,28 @@ class OpenAuthControllerIT(
             userId shouldBe notVerifiedUser.id
             token.shouldNotBeNull()
         }
-        notVerifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+        notVerifiedUserRepository.findByEmail(EMAIL).also {
             it.shouldBeNull()
         }
-        verifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+        verifiedUserRepository.findByEmail(EMAIL).also {
             it.shouldNotBeNull()
         }
     }
 
     should("rollback when verifying user and user details creation fails") {
         // given
-        val notVerifiedUser = saveNotVerifiedUser(email = DUMMY_EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
-        val verificationRequest = createVerificationRequest(email = DUMMY_EMAIL, code = notVerifiedUser.code)
-        stubUserDetails(createUserDetailsCreationRequest(notVerifiedUser.id, notVerifiedUser.email), INTERNAL_SERVER_ERROR)
+        val notVerifiedUser = saveNotVerifiedUser(email = EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
+        val verificationRequest = createVerificationRequest(email = EMAIL, code = notVerifiedUser.code)
+        stubUserDetailsCreation(createUserDetailsCreationRequest(notVerifiedUser.id, notVerifiedUser.username), INTERNAL_SERVER_ERROR)
         // when
         val response = service.verify(verificationRequest)
 
         // then
         response shouldHaveHttpStatus INTERNAL_SERVER_ERROR
-        notVerifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+        notVerifiedUserRepository.findByEmail(EMAIL).also {
             it.shouldNotBeNull()
         }
-        verifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+        verifiedUserRepository.findByEmail(EMAIL).also {
             it.shouldBeNull()
         }
     }
@@ -336,8 +340,8 @@ class OpenAuthControllerIT(
 
     should("return VerificationException when verifying and code is invalid") {
         // given
-        saveNotVerifiedUser(email = DUMMY_EMAIL, code = DUMMY_CODE, notVerifiedUserRepository = notVerifiedUserRepository)
-        val verificationRequest = createVerificationRequest(email = DUMMY_EMAIL, code = OTHER_DUMMY_CODE)
+        saveNotVerifiedUser(email = EMAIL, code = DUMMY_CODE, notVerifiedUserRepository = notVerifiedUserRepository)
+        val verificationRequest = createVerificationRequest(email = EMAIL, code = OTHER_DUMMY_CODE)
 
         // when
         val response = service.verify(verificationRequest)
@@ -350,18 +354,18 @@ class OpenAuthControllerIT(
     }
     should("send verification email") {
         // given
-        val notVerifiedUser = createNotVerifiedUser(email = DUMMY_EMAIL, updatedCodeAt = now().minus(10, MINUTES))
+        val notVerifiedUser = createNotVerifiedUser(email = EMAIL, updatedCodeAt = now().minus(10, MINUTES))
         notVerifiedUserRepository.create(notVerifiedUser)
 
         stubEmailSenderVerification()
-        val verificationEmailRequest = createVerificationEmailRequest(DUMMY_EMAIL)
+        val verificationEmailRequest = createVerificationEmailRequest(EMAIL)
 
         // when
         val response = service.sendVerificationEmail(verificationEmailRequest)
 
         // then
         response shouldHaveHttpStatus OK
-        notVerifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+        notVerifiedUserRepository.findByEmail(EMAIL).also {
             it.shouldNotBeNull()
             it.code shouldNotBe notVerifiedUser.code
         }
@@ -369,18 +373,18 @@ class OpenAuthControllerIT(
 
     should("rollback when sending verification email and emailSender fails") {
         // given
-        val notVerifiedUser = createNotVerifiedUser(email = DUMMY_EMAIL, updatedCodeAt = now().minus(10, MINUTES))
+        val notVerifiedUser = createNotVerifiedUser(email = EMAIL, updatedCodeAt = now().minus(10, MINUTES))
         notVerifiedUserRepository.create(notVerifiedUser)
 
         stubEmailSenderVerification(INTERNAL_SERVER_ERROR)
-        val verificationEmailRequest = createVerificationEmailRequest(DUMMY_EMAIL)
+        val verificationEmailRequest = createVerificationEmailRequest(EMAIL)
 
         // when
         val response = service.sendVerificationEmail(verificationEmailRequest)
 
         // then
         response shouldHaveHttpStatus INTERNAL_SERVER_ERROR
-        notVerifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+        notVerifiedUserRepository.findByEmail(EMAIL).also {
             it.shouldNotBeNull()
             it.code shouldBe notVerifiedUser.code
         }
@@ -418,9 +422,9 @@ class OpenAuthControllerIT(
 
     should("return EmailRecentlySentException when mail was recently sent") {
         // given
-        saveNotVerifiedUser(email = DUMMY_EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
+        saveNotVerifiedUser(email = EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
         stubEmailSenderVerification()
-        val verificationEmailRequest = createVerificationEmailRequest(DUMMY_EMAIL)
+        val verificationEmailRequest = createVerificationEmailRequest(EMAIL)
 
         // when
         val response = service.sendVerificationEmail(verificationEmailRequest)
@@ -434,11 +438,12 @@ class OpenAuthControllerIT(
 
     should("send password-recovery email") {
         // given
-        saveVerifiedUser(id = USER_ID, email = DUMMY_EMAIL, verifiedUserRepository = verifiedUserRepository)
+        saveVerifiedUser(id = USER_ID, email = EMAIL, verifiedUserRepository = verifiedUserRepository)
         stubEmailSenderPasswordRecovery()
+        stubGetUsername(DUMMY_USERNAME.toInternalUsernameResponse(), USER_ID)
 
         // when
-        val response = service.recoverPassword(createPasswordRecoveryRequest(DUMMY_EMAIL))
+        val response = service.recoverPassword(createPasswordRecoveryRequest(EMAIL))
 
         // then
         response shouldHaveHttpStatus OK
@@ -448,11 +453,12 @@ class OpenAuthControllerIT(
     }
     should("rollback when sending password-recovery and sending email fails") {
         // given
-        saveVerifiedUser(id = USER_ID, email = DUMMY_EMAIL, verifiedUserRepository = verifiedUserRepository)
+        saveVerifiedUser(id = USER_ID, email = EMAIL, verifiedUserRepository = verifiedUserRepository)
         stubEmailSenderPasswordRecovery(INTERNAL_SERVER_ERROR)
+        stubGetUsername(DUMMY_USERNAME.toInternalUsernameResponse(), USER_ID)
 
         // when
-        val response = service.recoverPassword(createPasswordRecoveryRequest(DUMMY_EMAIL))
+        val response = service.recoverPassword(createPasswordRecoveryRequest(EMAIL))
 
         // then
         response shouldHaveHttpStatus INTERNAL_SERVER_ERROR
@@ -475,7 +481,7 @@ class OpenAuthControllerIT(
 
     should("return NOT_FOUND when recovering password and user does not exist") {
         // given
-        val passwordRecoveryRequest = createPasswordRecoveryRequest(DUMMY_EMAIL)
+        val passwordRecoveryRequest = createPasswordRecoveryRequest(EMAIL)
 
         // when
         val response = service.recoverPassword(passwordRecoveryRequest)
@@ -486,8 +492,8 @@ class OpenAuthControllerIT(
 
     should("return TOO_MANY_REQUESTS when recovering password and email was recently sent") {
         // given
-        val passwordRecoveryRequest = createPasswordRecoveryRequest(DUMMY_EMAIL)
-        saveVerifiedUser(id = USER_ID, email = DUMMY_EMAIL, verifiedUserRepository = verifiedUserRepository)
+        val passwordRecoveryRequest = createPasswordRecoveryRequest(EMAIL)
+        saveVerifiedUser(id = USER_ID, email = EMAIL, verifiedUserRepository = verifiedUserRepository)
         passwordRecoveryCodeRepository.create(createPasswordRecoveryCode(USER_ID))
 
         // when
@@ -499,15 +505,16 @@ class OpenAuthControllerIT(
 
     should("send password email") {
         // given
-        val verifiedUser = createVerifiedUser(id = USER_ID, email = DUMMY_EMAIL)
+        val verifiedUser = createVerifiedUser(id = USER_ID, email = EMAIL)
         verifiedUserRepository.create(verifiedUser)
         val passwordRecoveryCode = createPasswordRecoveryCode(userId = USER_ID, code = DUMMY_CODE)
         passwordRecoveryCodeRepository.create(passwordRecoveryCode)
 
         stubEmailSenderPassword()
+        stubGetUsername(DUMMY_USERNAME.toInternalUsernameResponse(), USER_ID)
 
         // when
-        val response = service.sendPassword(email = DUMMY_EMAIL, code = DUMMY_CODE)
+        val response = service.sendPassword(email = EMAIL, code = DUMMY_CODE)
 
         // then
         response shouldHaveHttpStatus OK
@@ -515,7 +522,7 @@ class OpenAuthControllerIT(
             it.shouldBeNull()
         }
 
-        verifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+        verifiedUserRepository.findByEmail(EMAIL).also {
             it.shouldNotBeNull()
             it.password shouldNotBe verifiedUser.password
         }
@@ -523,15 +530,16 @@ class OpenAuthControllerIT(
 
     should("rollback when sending password email and EmailSender fails") {
         // given
-        val verifiedUser = createVerifiedUser(id = USER_ID, email = DUMMY_EMAIL)
+        val verifiedUser = createVerifiedUser(id = USER_ID, email = EMAIL)
         verifiedUserRepository.create(verifiedUser)
         val passwordRecoveryCode = createPasswordRecoveryCode(userId = USER_ID, code = DUMMY_CODE)
         passwordRecoveryCodeRepository.create(passwordRecoveryCode)
 
         stubEmailSenderPassword(statusCode = INTERNAL_SERVER_ERROR)
+        stubGetUsername(DUMMY_USERNAME.toInternalUsernameResponse(), USER_ID)
 
         // when
-        val response = service.sendPassword(email = DUMMY_EMAIL, code = DUMMY_CODE)
+        val response = service.sendPassword(email = EMAIL, code = DUMMY_CODE)
 
         // then
         response shouldHaveHttpStatus INTERNAL_SERVER_ERROR
@@ -539,7 +547,7 @@ class OpenAuthControllerIT(
             it.shouldNotBeNull()
         }
 
-        verifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+        verifiedUserRepository.findByEmail(EMAIL).also {
             it.shouldNotBeNull()
             it.password shouldBe verifiedUser.password
         }
@@ -550,7 +558,7 @@ class OpenAuthControllerIT(
         stubEmailSenderPassword()
 
         // when
-        val response = service.sendPassword(email = DUMMY_EMAIL, code = DUMMY_CODE)
+        val response = service.sendPassword(email = EMAIL, code = DUMMY_CODE)
 
         // then
         response shouldHaveHttpStatus BAD_REQUEST
@@ -559,16 +567,16 @@ class OpenAuthControllerIT(
     should("return BAD_REQUEST when sending password and passwordRecoveryCode does not exist ") {
         // given
         stubEmailSenderPassword()
-        val verifiedUser = createVerifiedUser(id = USER_ID, email = DUMMY_EMAIL)
+        val verifiedUser = createVerifiedUser(id = USER_ID, email = EMAIL)
         verifiedUserRepository.create(verifiedUser)
 
         // when
-        val response = service.sendPassword(email = DUMMY_EMAIL, code = DUMMY_CODE)
+        val response = service.sendPassword(email = EMAIL, code = DUMMY_CODE)
 
         // then
         response shouldHaveHttpStatus BAD_REQUEST
 
-        verifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+        verifiedUserRepository.findByEmail(EMAIL).also {
             it.shouldNotBeNull()
             it.password shouldBe verifiedUser.password
         }
@@ -577,20 +585,20 @@ class OpenAuthControllerIT(
     should("return BAD_REQUEST when sending password and code is not correct") {
         // given
         stubEmailSenderPassword()
-        val verifiedUser = createVerifiedUser(id = USER_ID, email = DUMMY_EMAIL)
+        val verifiedUser = createVerifiedUser(id = USER_ID, email = EMAIL)
         verifiedUserRepository.create(verifiedUser)
         val passwordRecoveryCode = createPasswordRecoveryCode(userId = USER_ID, code = DUMMY_CODE)
         passwordRecoveryCodeRepository.create(passwordRecoveryCode)
 
         // when
-        val response = service.sendPassword(email = DUMMY_EMAIL, code = OTHER_DUMMY_CODE)
+        val response = service.sendPassword(email = EMAIL, code = OTHER_DUMMY_CODE)
 
         // then
         response shouldHaveHttpStatus BAD_REQUEST
         passwordRecoveryCodeRepository.findByUserId(USER_ID).also {
             it.shouldNotBeNull()
         }
-        verifiedUserRepository.findByEmail(DUMMY_EMAIL).also {
+        verifiedUserRepository.findByEmail(EMAIL).also {
             it.shouldNotBeNull()
             it.password shouldBe verifiedUser.password
         }

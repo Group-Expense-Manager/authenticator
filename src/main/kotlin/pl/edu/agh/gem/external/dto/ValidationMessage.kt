@@ -1,6 +1,7 @@
 package pl.edu.agh.gem.external.dto
 
 object ValidationMessage {
+    const val USERNAME_PATTERN_MESSAGE = "Username must be 3 to 20 characters long and contain only letters, digits, underscores, or hyphens"
     const val EMAIL_NOT_BLANK = "Email can not be blank"
     const val PASSWORD_NOT_BLANK = "Password can not be blank"
     const val WRONG_EMAIL_FORMAT = "Wrong email format"

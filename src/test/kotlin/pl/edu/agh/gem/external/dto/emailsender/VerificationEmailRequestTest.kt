@@ -1,27 +1,29 @@
 package pl.edu.agh.gem.external.dto.emailsender
 
 import io.kotest.core.spec.style.ShouldSpec
-import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import pl.edu.agh.gem.util.createEmailDetails
+import pl.edu.agh.gem.helper.user.DummyUser.EMAIL
+import pl.edu.agh.gem.util.DummyData.DUMMY_CODE
+import pl.edu.agh.gem.util.DummyData.DUMMY_USERNAME
+import pl.edu.agh.gem.util.createVerificationEmailDetails
 
 class VerificationEmailRequestTest : ShouldSpec({
 
     should("map correct from Verification") {
         // given
-        val emailDetails = createEmailDetails(
-            email = "my@mail.com",
-            code = "123456",
+        val emailDetails = createVerificationEmailDetails(
+            username = DUMMY_USERNAME,
+            email = EMAIL,
+            code = DUMMY_CODE,
         )
         // when
         val sendVerificationRequest = VerificationEmailRequest.from(emailDetails)
 
         // then
         sendVerificationRequest.also {
-            it.email.shouldNotBeNull()
-            it.email shouldBe "my@mail.com"
-            it.code.shouldNotBeNull()
-            it.code shouldBe "123456"
+            it.username shouldBe DUMMY_USERNAME
+            it.email shouldBe EMAIL
+            it.code shouldBe DUMMY_CODE
         }
     }
 },)

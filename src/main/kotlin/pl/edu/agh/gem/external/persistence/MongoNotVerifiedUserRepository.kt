@@ -39,6 +39,7 @@ class MongoNotVerifiedUserRepository(
     private fun NotVerifiedUser.toEntity() =
         NotVerifiedUserEntity(
             id = id,
+            username = username,
             email = email,
             password = password,
             createdAt = createdAt,

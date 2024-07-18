@@ -107,6 +107,7 @@ class OpenAuthController(
     private fun RegistrationRequest.toDomain() =
         NotVerifiedUser(
             id = randomUUID().toString(),
+            username = username,
             email = email,
             password = passwordEncoder.encode(password),
             createdAt = now(),
