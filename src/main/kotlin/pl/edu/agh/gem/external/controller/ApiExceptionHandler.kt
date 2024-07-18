@@ -14,6 +14,7 @@ import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.ResponseStatus
 import pl.edu.agh.gem.error.SimpleError
 import pl.edu.agh.gem.error.SimpleErrorsHolder
 import pl.edu.agh.gem.error.handleError
@@ -21,6 +22,7 @@ import pl.edu.agh.gem.error.withCode
 import pl.edu.agh.gem.error.withDetails
 import pl.edu.agh.gem.error.withMessage
 import pl.edu.agh.gem.error.withUserMessage
+import pl.edu.agh.gem.external.controller.ApiExceptionHandler.HTML.FAILURE
 import pl.edu.agh.gem.internal.client.EmailSenderClientException
 import pl.edu.agh.gem.internal.client.RetryableEmailSenderClientException
 import pl.edu.agh.gem.internal.client.RetryableUserDetailsManagerClientException
@@ -73,10 +75,9 @@ class ApiExceptionHandler {
     }
 
     @ExceptionHandler(PasswordRecoveryException::class)
-    fun handlePasswordRecoveryException(
-        exception: PasswordRecoveryException,
-    ): ResponseEntity<SimpleErrorsHolder> {
-        return ResponseEntity(handleError(exception), BAD_REQUEST)
+    @ResponseStatus(BAD_REQUEST)
+    fun handlePasswordRecoveryException(): String {
+        return FAILURE
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
@@ -126,5 +127,9 @@ class ApiExceptionHandler {
         return SimpleErrorsHolder(errors).apply {
             jacksonObjectMapper().writeValueAsString(this)
         }
+    }
+
+    object HTML {
+        const val FAILURE = "failure"
     }
 }
