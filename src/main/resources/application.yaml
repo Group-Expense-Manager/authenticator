@@ -53,5 +53,5 @@ email:
   time-between-emails: PT5M
 
 url:
-  gem-url: gem.web.authenticator.com
+  gem-url: http://gem.web.authenticator.com
 
