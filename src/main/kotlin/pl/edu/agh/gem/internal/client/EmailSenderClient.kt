@@ -1,11 +1,12 @@
 package pl.edu.agh.gem.internal.client
 
 import pl.edu.agh.gem.internal.model.emailsender.PasswordEmailDetails
+import pl.edu.agh.gem.internal.model.emailsender.PasswordRecoveryEmailDetails
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 
 interface EmailSenderClient {
     fun sendVerificationEmail(verificationEmailDetails: VerificationEmailDetails)
-    fun sendPasswordRecoveryEmail(email: String, code: String)
+    fun sendPasswordRecoveryEmail(passwordRecoveryEmailDetails: PasswordRecoveryEmailDetails)
     fun sendPassword(passwordEmailDetails: PasswordEmailDetails)
 }
 

@@ -18,4 +18,4 @@ token:
   secret-key: ${TOKEN_SECRET_KEY}
 
 url:
-  gem-url: http://${GEM_URL}
+  gem-url: ${GEM_URL}

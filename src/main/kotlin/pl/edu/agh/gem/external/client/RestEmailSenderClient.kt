@@ -54,13 +54,12 @@ class RestEmailSenderClient(
         }
     }
 
-    override fun sendPasswordRecoveryEmail(email: String, code: String) {
-        val passwordRecoveryEmailDetails = PasswordRecoveryEmailDetails(email, generateLink(email, code))
+    override fun sendPasswordRecoveryEmail(passwordRecoveryEmailDetails: PasswordRecoveryEmailDetails) {
         try {
             restTemplate.exchange(
                 resolvePasswordRecoveryAddress(),
                 POST,
-                HttpEntity(PasswordRecoveryEmailRequest.from(passwordRecoveryEmailDetails), HttpHeaders().withAppContentType()),
+                HttpEntity(passwordRecoveryEmailDetails.toPasswordRecoveryEmailRequest(), HttpHeaders().withAppContentType()),
                 Any::class.java,
             )
         } catch (ex: HttpClientErrorException) {
@@ -95,7 +94,9 @@ class RestEmailSenderClient(
         }
     }
 
-    private fun generateLink(email: String, code: String) = "http://${urlProperties.gemUrl}/$OPEN/send-password?email=$email&code=$code"
+    fun PasswordRecoveryEmailDetails.toPasswordRecoveryEmailRequest() = PasswordRecoveryEmailRequest(username, email, generateLink(email, code))
+
+    private fun generateLink(email: String, code: String) = "${urlProperties.gemUrl}$OPEN/send-password?email=$email&code=$code"
 
     private fun resolveVerificationAddress() =
         "${emailSenderClientProperties.url}/$INTERNAL/verification"

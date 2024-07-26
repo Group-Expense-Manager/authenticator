@@ -6,9 +6,8 @@ import pl.edu.agh.gem.integration.ability.stubEmailSenderPassword
 import pl.edu.agh.gem.integration.ability.stubEmailSenderPasswordRecovery
 import pl.edu.agh.gem.integration.ability.stubEmailSenderVerification
 import pl.edu.agh.gem.internal.client.EmailSenderClient
-import pl.edu.agh.gem.util.DummyData.DUMMY_CODE
-import pl.edu.agh.gem.util.DummyData.DUMMY_EMAIL
 import pl.edu.agh.gem.util.createPasswordEmailDetails
+import pl.edu.agh.gem.util.createPasswordRecoveryEmailDetails
 import pl.edu.agh.gem.util.createVerificationEmailDetails
 
 class EmailSenderClientIT(
@@ -31,7 +30,7 @@ class EmailSenderClientIT(
 
         // when & then
         shouldNotThrowAny {
-            emailSenderClient.sendPasswordRecoveryEmail(DUMMY_EMAIL, DUMMY_CODE)
+            emailSenderClient.sendPasswordRecoveryEmail(createPasswordRecoveryEmailDetails())
         }
     }
 

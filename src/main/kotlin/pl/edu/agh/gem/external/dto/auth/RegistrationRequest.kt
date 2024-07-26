@@ -11,9 +11,12 @@ import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_LOWERCASE
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_NOT_BLANK
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_SPECIAL_CHARACTER
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_UPPERCASE
+import pl.edu.agh.gem.external.dto.ValidationMessage.USERNAME_PATTERN_MESSAGE
 import pl.edu.agh.gem.external.dto.ValidationMessage.WRONG_EMAIL_FORMAT
 
 data class RegistrationRequest(
+    @field:Pattern(message = USERNAME_PATTERN_MESSAGE, regexp = "^[a-zA-Z0-9_.+-]{3,20}$")
+    val username: String,
     @field:NotBlank(message = EMAIL_NOT_BLANK)
     @field:Pattern(
         regexp = "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$",

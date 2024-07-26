@@ -74,7 +74,7 @@ class ServiceTestClient(applicationContext: WebApplicationContext) {
     }
 
     fun sendPassword(email: String, code: String): ResponseSpec {
-        return webClient.post()
+        return webClient.get()
             .uri {
                 it.path("$OPEN/send-password")
                     .queryParam("email", email)

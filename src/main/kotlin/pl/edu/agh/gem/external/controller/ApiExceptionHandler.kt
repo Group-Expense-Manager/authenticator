@@ -27,12 +27,11 @@ import pl.edu.agh.gem.internal.client.RetryableUserDetailsManagerClientException
 import pl.edu.agh.gem.internal.client.UserDetailsManagerClientException
 import pl.edu.agh.gem.internal.service.DuplicateEmailException
 import pl.edu.agh.gem.internal.service.EmailRecentlySentException
-import pl.edu.agh.gem.internal.service.PasswordRecoveryCodeExpirationException
+import pl.edu.agh.gem.internal.service.PasswordRecoveryException
 import pl.edu.agh.gem.internal.service.UserNotFoundException
 import pl.edu.agh.gem.internal.service.UserNotVerifiedException
 import pl.edu.agh.gem.internal.service.VerificationException
 import pl.edu.agh.gem.internal.service.WrongPasswordException
-import pl.edu.agh.gem.internal.service.WrongPasswordRecoveryCodeException
 
 @ControllerAdvice
 @Order(LOWEST_PRECEDENCE)
@@ -73,16 +72,9 @@ class ApiExceptionHandler {
         return ResponseEntity(handleError(exception), BAD_REQUEST)
     }
 
-    @ExceptionHandler(PasswordRecoveryCodeExpirationException::class)
-    fun handlePasswordRecoveryCodeExpirationException(
-        exception: PasswordRecoveryCodeExpirationException,
-    ): ResponseEntity<SimpleErrorsHolder> {
-        return ResponseEntity(handleError(exception), FORBIDDEN)
-    }
-
-    @ExceptionHandler(WrongPasswordRecoveryCodeException::class)
-    fun handleWrongPasswordRecoveryCodeException(
-        exception: WrongPasswordRecoveryCodeException,
+    @ExceptionHandler(PasswordRecoveryException::class)
+    fun handlePasswordRecoveryException(
+        exception: PasswordRecoveryException,
     ): ResponseEntity<SimpleErrorsHolder> {
         return ResponseEntity(handleError(exception), BAD_REQUEST)
     }

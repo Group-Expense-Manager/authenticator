@@ -10,6 +10,7 @@ import java.time.Instant
 data class NotVerifiedUserEntity(
     @Id
     val id: String,
+    val username: String,
     val email: String,
     val password: String,
     @Indexed(expireAfter = "P30D")
@@ -20,6 +21,7 @@ data class NotVerifiedUserEntity(
     fun toDomain() =
         NotVerifiedUser(
             id = id,
+            username = username,
             email = email,
             password = password,
             createdAt = createdAt,

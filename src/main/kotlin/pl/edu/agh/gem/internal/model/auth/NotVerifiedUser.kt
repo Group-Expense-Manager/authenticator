@@ -4,6 +4,7 @@ import java.time.Instant
 
 data class NotVerifiedUser(
     val id: String,
+    val username: String,
     val email: String,
     val password: String,
     val createdAt: Instant,
