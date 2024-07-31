@@ -12,7 +12,7 @@ data class VerificationRequest(
     val code: String,
 ) {
     fun toDomain() = Verification(
-        email = email,
+        email = email.lowercase(),
         code = code,
     )
 }

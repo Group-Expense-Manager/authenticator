@@ -9,7 +9,7 @@ class VerificationRequestTest : ShouldSpec({
     should("map correct to Verification") {
         // given
         val verificationRequest = createVerificationRequest(
-            email = "my@mail.com",
+            email = "my@Mail.com",
             code = "123456",
         )
         // when
