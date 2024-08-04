@@ -133,7 +133,7 @@ class OpenAuthControllerIT(
 
     should("return DuplicateEmailException when user with given email already exists") {
         // given
-        val registrationRequest = createRegistrationRequest(email = EMAIL)
+        val registrationRequest = createRegistrationRequest(email = EMAIL.uppercase())
         saveNotVerifiedUser(email = EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
 
         // when
@@ -154,7 +154,7 @@ class OpenAuthControllerIT(
             password = passwordEncoder.encode(DUMMY_PASSWORD),
             verifiedUserRepository = verifiedUserRepository,
         )
-        val loginRequest = createLoginRequest(email = EMAIL, password = DUMMY_PASSWORD)
+        val loginRequest = createLoginRequest(email = EMAIL.uppercase(), password = DUMMY_PASSWORD)
 
         // when
         val response = service.login(loginRequest)
@@ -261,7 +261,7 @@ class OpenAuthControllerIT(
     should("Verify code") {
         // given
         val notVerifiedUser = saveNotVerifiedUser(email = EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
-        val verificationRequest = createVerificationRequest(email = EMAIL, code = notVerifiedUser.code)
+        val verificationRequest = createVerificationRequest(email = EMAIL.uppercase(), code = notVerifiedUser.code)
         stubUserDetailsCreation(createUserDetailsCreationRequest(notVerifiedUser.id, notVerifiedUser.username))
         // when
         val response = service.verify(verificationRequest)
@@ -356,7 +356,7 @@ class OpenAuthControllerIT(
         notVerifiedUserRepository.create(notVerifiedUser)
 
         stubEmailSenderVerification()
-        val verificationEmailRequest = createVerificationEmailRequest(EMAIL)
+        val verificationEmailRequest = createVerificationEmailRequest(EMAIL.uppercase())
 
         // when
         val response = service.sendVerificationEmail(verificationEmailRequest)
@@ -441,7 +441,7 @@ class OpenAuthControllerIT(
         stubGetUsername(DUMMY_USERNAME.toInternalUsernameResponse(), USER_ID)
 
         // when
-        val response = service.recoverPassword(createPasswordRecoveryRequest(EMAIL))
+        val response = service.recoverPassword(createPasswordRecoveryRequest(EMAIL.uppercase()))
 
         // then
         response shouldHaveHttpStatus OK

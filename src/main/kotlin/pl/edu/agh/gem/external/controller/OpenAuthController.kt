@@ -51,12 +51,12 @@ class OpenAuthController(
     ): LoginResponse {
         authManager.authenticate(
             UsernamePasswordAuthenticationToken(
-                loginRequest.email,
+                loginRequest.email.lowercase(),
                 loginRequest.password,
             ),
         )
 
-        val verifiedUser = authService.getVerifiedUser(loginRequest.email)
+        val verifiedUser = authService.getVerifiedUser(loginRequest.email.lowercase())
         return LoginResponse(
             verifiedUser.id,
             jwtService.createToken(verifiedUser),
@@ -82,7 +82,7 @@ class OpenAuthController(
         @Valid @RequestBody
         verificationEmailRequest: VerificationEmailRequest,
     ) {
-        authService.sendVerificationEmail(verificationEmailRequest.email)
+        authService.sendVerificationEmail(verificationEmailRequest.email.lowercase())
     }
 
     @PostMapping("recover-password", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
@@ -91,14 +91,14 @@ class OpenAuthController(
         @Valid @RequestBody
         passwordRecoveryRequest: PasswordRecoveryRequest,
     ) {
-        authService.sendPasswordRecoveryEmail(passwordRecoveryRequest.email)
+        authService.sendPasswordRecoveryEmail(passwordRecoveryRequest.email.lowercase())
     }
 
     private fun RegistrationRequest.toDomain() =
         NotVerifiedUser(
             id = randomUUID().toString(),
             username = username,
-            email = email,
+            email = email.lowercase(),
             password = passwordEncoder.encode(password),
             createdAt = now(),
             code = authService.generateCode(),

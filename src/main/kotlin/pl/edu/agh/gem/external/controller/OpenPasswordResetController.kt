@@ -18,7 +18,7 @@ class OpenPasswordResetController(
         @RequestParam email: String,
         @RequestParam code: String,
     ): String {
-        authService.sendPasswordEmail(email, code)
+        authService.sendPasswordEmail(email.lowercase(), code)
         return "success"
     }
 }

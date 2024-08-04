@@ -41,7 +41,7 @@ class OpenPasswordResetControllerIT(
         stubGetUsername(DUMMY_USERNAME.toInternalUsernameResponse(), USER_ID)
 
         // when
-        val response = service.sendPassword(email = EMAIL, code = DUMMY_CODE)
+        val response = service.sendPassword(email = EMAIL.uppercase(), code = DUMMY_CODE)
 
         // then
         response shouldHaveHttpStatus OK
