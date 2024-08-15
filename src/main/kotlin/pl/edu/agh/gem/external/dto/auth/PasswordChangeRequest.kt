@@ -18,8 +18,8 @@ data class PasswordChangeRequest(
     @field:Size(min = 8, message = MIN_PASSWORD_LENGTH)
     @field:Size(max = 30, message = MAX_PASSWORD_LENGTH)
     @field:Pattern.List(
-        Pattern(regexp = ".*[a-z].*", message = PASSWORD_LOWERCASE),
-        Pattern(regexp = ".*[A-Z].*", message = PASSWORD_UPPERCASE),
+        Pattern(regexp = ".*\\p{Ll}.*", message = PASSWORD_LOWERCASE),
+        Pattern(regexp = ".*\\p{Lu}.*", message = PASSWORD_UPPERCASE),
         Pattern(regexp = ".*\\d.*", message = PASSWORD_DIGIT),
         Pattern(regexp = ".*[@#$%^&+=!].*", message = PASSWORD_SPECIAL_CHARACTER),
     )
