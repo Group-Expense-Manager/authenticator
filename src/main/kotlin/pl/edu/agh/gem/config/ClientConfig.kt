@@ -2,10 +2,10 @@ package pl.edu.agh.gem.config
 
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.boot.web.client.RestTemplateBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.client.RestTemplate
+import pl.edu.agh.gem.helper.http.GemRestTemplateFactory
 import java.time.Duration
 
 @Configuration
@@ -13,10 +13,14 @@ class ClientConfig {
 
     @Bean
     @Qualifier("EmailSenderClientRestTemplate")
-    fun emailSenderClientRestTemplate(emailSenderClientProperties: EmailSenderClientProperties): RestTemplate {
-        return RestTemplateBuilder()
-            .setConnectTimeout(emailSenderClientProperties.connectTimeout)
-            .setReadTimeout(emailSenderClientProperties.readTimeout)
+    fun emailSenderClientRestTemplate(
+        emailSenderClientProperties: EmailSenderClientProperties,
+        gemRestTemplateFactory: GemRestTemplateFactory,
+    ): RestTemplate {
+        return gemRestTemplateFactory
+            .builder()
+            .withReadTimeout(emailSenderClientProperties.readTimeout)
+            .withConnectTimeout(emailSenderClientProperties.connectTimeout)
             .build()
     }
 
@@ -24,10 +28,12 @@ class ClientConfig {
     @Qualifier("UserDetailsManagerClientRestTemplate")
     fun userDetailsManagerClientRestTemplate(
         userDetailsManagerClientProperties: UserDetailsManagerClientProperties,
+        gemRestTemplateFactory: GemRestTemplateFactory,
     ): RestTemplate {
-        return RestTemplateBuilder()
-            .setConnectTimeout(userDetailsManagerClientProperties.connectTimeout)
-            .setReadTimeout(userDetailsManagerClientProperties.readTimeout)
+        return gemRestTemplateFactory
+            .builder()
+            .withReadTimeout(userDetailsManagerClientProperties.readTimeout)
+            .withConnectTimeout(userDetailsManagerClientProperties.connectTimeout)
             .build()
     }
 }
