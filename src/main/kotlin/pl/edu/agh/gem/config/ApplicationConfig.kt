@@ -14,7 +14,7 @@ import org.springframework.data.mongodb.MongoDatabaseFactory
 import org.springframework.data.mongodb.MongoTransactionManager
 import org.springframework.web.servlet.LocaleResolver
 import org.springframework.web.servlet.i18n.SessionLocaleResolver
-import pl.edu.agh.gem.locale.LocaleTime.EUROPE_WARSAW
+import java.time.ZoneOffset.UTC
 import java.util.Locale.ENGLISH
 import java.util.TimeZone
 
@@ -43,7 +43,7 @@ class ApplicationConfig {
 
     @PostConstruct
     fun init() {
-        TimeZone.setDefault(TimeZone.getTimeZone(EUROPE_WARSAW))
+        TimeZone.setDefault(TimeZone.getTimeZone(UTC))
     }
 
     @Bean
