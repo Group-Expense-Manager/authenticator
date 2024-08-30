@@ -11,5 +11,6 @@ object ValidationMessage {
     const val PASSWORD_UPPERCASE = "Password must contain at least one uppercase letter"
     const val PASSWORD_DIGIT = "Password must contain at least one digit"
     const val PASSWORD_SPECIAL_CHARACTER = "Password must contain at least one special character among @#\$%^&+=!"
+    const val PASSWORD_NOT_WHITESPACE_CHARACTER = "Password must not contain whitespace"
     const val CODE_NOT_BLANK = "Code can not be blank"
 }
