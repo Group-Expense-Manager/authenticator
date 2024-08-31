@@ -26,6 +26,7 @@ import pl.edu.agh.gem.external.dto.ValidationMessage.MIN_PASSWORD_LENGTH
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_DIGIT
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_LOWERCASE
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_NOT_BLANK
+import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_NOT_WHITESPACE_CHARACTER
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_SPECIAL_CHARACTER
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_UPPERCASE
 import pl.edu.agh.gem.external.dto.ValidationMessage.USERNAME_PATTERN_MESSAGE
@@ -121,6 +122,8 @@ class OpenAuthControllerIT(
             Pair(PASSWORD_UPPERCASE, createRegistrationRequest(password = "password")),
             Pair(PASSWORD_DIGIT, createRegistrationRequest(password = "password")),
             Pair(PASSWORD_SPECIAL_CHARACTER, createRegistrationRequest(password = "password")),
+            Pair(PASSWORD_NOT_WHITESPACE_CHARACTER, createRegistrationRequest(password = "my password")),
+
         ) { (expectedMessage, registrationRequest) ->
             // when
             val response = service.register(registrationRequest)

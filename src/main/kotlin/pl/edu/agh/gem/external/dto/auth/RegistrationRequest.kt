@@ -9,6 +9,7 @@ import pl.edu.agh.gem.external.dto.ValidationMessage.MIN_PASSWORD_LENGTH
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_DIGIT
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_LOWERCASE
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_NOT_BLANK
+import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_NOT_WHITESPACE_CHARACTER
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_SPECIAL_CHARACTER
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_UPPERCASE
 import pl.edu.agh.gem.external.dto.ValidationMessage.USERNAME_PATTERN_MESSAGE
@@ -31,6 +32,7 @@ data class RegistrationRequest(
         Pattern(regexp = ".*\\p{Lu}.*", message = PASSWORD_UPPERCASE),
         Pattern(regexp = ".*\\d.*", message = PASSWORD_DIGIT),
         Pattern(regexp = ".*[@#$%^&+=!].*", message = PASSWORD_SPECIAL_CHARACTER),
+        Pattern(regexp = "^\\S*$", message = PASSWORD_NOT_WHITESPACE_CHARACTER),
     )
     val password: String,
 )

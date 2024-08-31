@@ -17,6 +17,7 @@ import pl.edu.agh.gem.external.dto.ValidationMessage.MIN_PASSWORD_LENGTH
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_DIGIT
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_LOWERCASE
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_NOT_BLANK
+import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_NOT_WHITESPACE_CHARACTER
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_SPECIAL_CHARACTER
 import pl.edu.agh.gem.external.dto.ValidationMessage.PASSWORD_UPPERCASE
 import pl.edu.agh.gem.helper.user.DummyUser.EMAIL
@@ -66,6 +67,7 @@ class ExternalAuthControllerIT(
             Pair(PASSWORD_UPPERCASE, createPasswordChangeRequest(newPassword = "password")),
             Pair(PASSWORD_DIGIT, createPasswordChangeRequest(newPassword = "password")),
             Pair(PASSWORD_SPECIAL_CHARACTER, createPasswordChangeRequest(newPassword = "Password")),
+            Pair(PASSWORD_NOT_WHITESPACE_CHARACTER, createPasswordChangeRequest(newPassword = "My Password")),
         ) { (expectedMessage, registrationRequest) ->
             // when
             val response = service.changePassword(registrationRequest, GemUser(USER_ID, EMAIL))
