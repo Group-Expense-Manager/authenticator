@@ -14,6 +14,7 @@ import pl.edu.agh.gem.external.dto.auth.VerificationRequest
 import pl.edu.agh.gem.headers.HeadersUtils.withAppContentType
 import pl.edu.agh.gem.headers.HeadersUtils.withValidatedUser
 import pl.edu.agh.gem.paths.Paths.EXTERNAL
+import pl.edu.agh.gem.paths.Paths.INTERNAL
 import pl.edu.agh.gem.paths.Paths.OPEN
 import pl.edu.agh.gem.security.GemUser
 import java.net.URI
@@ -81,6 +82,13 @@ class ServiceTestClient(applicationContext: WebApplicationContext) {
                     .queryParam("code", code)
                     .build()
             }
+            .exchange()
+    }
+
+    fun getEmailAddress(userId: String): ResponseSpec {
+        return webClient.get()
+            .uri(URI("$INTERNAL/users/$userId/email"))
+            .headers { it.withAppContentType() }
             .exchange()
     }
 }

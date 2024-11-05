@@ -381,5 +381,30 @@ class AuthServiceTest : ShouldSpec(
             verify(passwordRecoveryCodeRepository, times(0)).deleteByUserId(anyVararg(String::class))
             verify(emailSenderClient, times(0)).sendPassword(anyVararg(PasswordEmailDetails::class))
         }
+
+        should("return email address") {
+            // given
+            val verifiedUser = createVerifiedUser(id = USER_ID, email = EMAIL)
+            whenever(verifiedUserRepository.findById(USER_ID)).thenReturn(verifiedUser)
+
+            // when
+            val email = authService.getEmailAddress(USER_ID)
+
+            // then
+            email shouldBe EMAIL
+            verify(verifiedUserRepository, times(1)).findById(USER_ID)
+        }
+
+        should("return UserNotFound when getting email address") {
+            // given
+            whenever(verifiedUserRepository.findById(USER_ID)).thenReturn(null)
+
+            // when & then
+            shouldThrowExactly<UserNotFoundException> {
+                authService.getEmailAddress(USER_ID)
+            }
+
+            verify(verifiedUserRepository, times(1)).findById(USER_ID)
+        }
     },
 )

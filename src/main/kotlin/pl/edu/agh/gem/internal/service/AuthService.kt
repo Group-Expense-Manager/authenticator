@@ -157,6 +157,10 @@ class AuthService(
         }
     }
 
+    fun getEmailAddress(userId: String): String {
+        return verifiedUserRepository.findById(userId)?.email ?: throw UserNotFoundException()
+    }
+
     companion object {
         private const val CODE_LENGTH = 6L
         private const val RANDOM_NUMBER_BOUND = 10
