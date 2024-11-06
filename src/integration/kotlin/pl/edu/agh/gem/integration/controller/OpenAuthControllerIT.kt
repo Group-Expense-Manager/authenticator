@@ -33,14 +33,12 @@ import pl.edu.agh.gem.external.dto.ValidationMessage.USERNAME_PATTERN_MESSAGE
 import pl.edu.agh.gem.external.dto.ValidationMessage.WRONG_EMAIL_FORMAT
 import pl.edu.agh.gem.external.dto.auth.LoginResponse
 import pl.edu.agh.gem.external.dto.auth.VerificationResponse
-import pl.edu.agh.gem.external.dto.userdetailsmanager.toInternalUsernameResponse
 import pl.edu.agh.gem.helper.user.DummyUser.EMAIL
 import pl.edu.agh.gem.helper.user.DummyUser.USER_ID
 import pl.edu.agh.gem.integration.BaseIntegrationSpec
 import pl.edu.agh.gem.integration.ability.ServiceTestClient
 import pl.edu.agh.gem.integration.ability.stubEmailSenderPasswordRecovery
 import pl.edu.agh.gem.integration.ability.stubEmailSenderVerification
-import pl.edu.agh.gem.integration.ability.stubGetUsername
 import pl.edu.agh.gem.integration.ability.stubUserDetailsCreation
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
 import pl.edu.agh.gem.internal.persistence.PasswordRecoveryCodeRepository
@@ -441,7 +439,6 @@ class OpenAuthControllerIT(
         // given
         saveVerifiedUser(id = USER_ID, email = EMAIL, verifiedUserRepository = verifiedUserRepository)
         stubEmailSenderPasswordRecovery()
-        stubGetUsername(DUMMY_USERNAME.toInternalUsernameResponse(), USER_ID)
 
         // when
         val response = service.recoverPassword(createPasswordRecoveryRequest(EMAIL.uppercase()))
@@ -456,7 +453,6 @@ class OpenAuthControllerIT(
         // given
         saveVerifiedUser(id = USER_ID, email = EMAIL, verifiedUserRepository = verifiedUserRepository)
         stubEmailSenderPasswordRecovery(INTERNAL_SERVER_ERROR)
-        stubGetUsername(DUMMY_USERNAME.toInternalUsernameResponse(), USER_ID)
 
         // when
         val response = service.recoverPassword(createPasswordRecoveryRequest(EMAIL))
