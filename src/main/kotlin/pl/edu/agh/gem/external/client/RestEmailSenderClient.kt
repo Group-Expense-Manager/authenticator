@@ -94,7 +94,7 @@ class RestEmailSenderClient(
         }
     }
 
-    fun PasswordRecoveryEmailDetails.toPasswordRecoveryEmailRequest() = PasswordRecoveryEmailRequest(username, email, generateLink(email, code))
+    fun PasswordRecoveryEmailDetails.toPasswordRecoveryEmailRequest() = PasswordRecoveryEmailRequest(userId, email, generateLink(email, code))
 
     private fun generateLink(email: String, code: String) = "${urlProperties.gemUrl}$OPEN/reset-password?email=$email&code=$code"
 

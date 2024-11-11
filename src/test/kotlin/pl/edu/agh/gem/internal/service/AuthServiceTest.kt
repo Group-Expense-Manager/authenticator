@@ -26,7 +26,6 @@ import pl.edu.agh.gem.internal.persistence.PasswordRecoveryCodeRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
 import pl.edu.agh.gem.util.DummyData.DUMMY_CODE
 import pl.edu.agh.gem.util.DummyData.DUMMY_PASSWORD
-import pl.edu.agh.gem.util.DummyData.DUMMY_USERNAME
 import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_CODE
 import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_PASSWORD
 import pl.edu.agh.gem.util.createNotVerifiedUser
@@ -260,7 +259,6 @@ class AuthServiceTest : ShouldSpec(
             whenever(verifiedUserRepository.findByEmail(EMAIL)).thenReturn(verifiedUser)
             whenever(passwordRecoveryCodeRepository.findByUserId(USER_ID)).thenReturn(null)
             whenever(passwordRecoveryCodeRepository.create(anyVararg(PasswordRecoveryCode::class))).thenReturn(passwordRecoveryCode)
-            whenever(userDetailsManagerClient.getUsername(verifiedUser.id)).thenReturn(DUMMY_USERNAME)
 
             // when
             authService.sendPasswordRecoveryEmail(EMAIL)
@@ -270,7 +268,6 @@ class AuthServiceTest : ShouldSpec(
             verify(passwordRecoveryCodeRepository, times(1)).findByUserId(USER_ID)
             verify(passwordRecoveryCodeRepository, times(1)).create(anyVararg(PasswordRecoveryCode::class))
             verify(emailSenderClient, times(1)).sendPasswordRecoveryEmail(anyVararg(PasswordRecoveryEmailDetails::class))
-            verify(userDetailsManagerClient, times(1)).getUsername(verifiedUser.id)
         }
 
         should("throw UserNotFoundException when sending password recovery mail and user doesn't exist") {
@@ -310,7 +307,6 @@ class AuthServiceTest : ShouldSpec(
             whenever(verifiedUserRepository.findByEmail(EMAIL)).thenReturn(verifiedUser)
             whenever(passwordRecoveryCodeRepository.findByUserId(USER_ID)).thenReturn(passwordRecoveryCode)
             whenever(passwordEncoder.encode(anyVararg(String::class))).thenReturn(newEncodedPassword)
-            whenever(userDetailsManagerClient.getUsername(verifiedUser.id)).thenReturn(DUMMY_USERNAME)
 
             // when
             authService.sendPasswordEmail(EMAIL, DUMMY_CODE)
@@ -323,7 +319,6 @@ class AuthServiceTest : ShouldSpec(
             verify(passwordRecoveryCodeRepository, times(1)).deleteByUserId(USER_ID)
             verify(passwordEncoder, times(1)).encode(anyVararg(String::class))
             verify(emailSenderClient, times(1)).sendPassword(anyVararg(PasswordEmailDetails::class))
-            verify(userDetailsManagerClient, times(1)).getUsername(verifiedUser.id)
         }
 
         should("throw PasswordRecoveryException when sending email with password and user does not exist") {
@@ -380,6 +375,31 @@ class AuthServiceTest : ShouldSpec(
             verify(verifiedUserRepository, times(0)).updatePassword(anyVararg(String::class), anyVararg(String::class))
             verify(passwordRecoveryCodeRepository, times(0)).deleteByUserId(anyVararg(String::class))
             verify(emailSenderClient, times(0)).sendPassword(anyVararg(PasswordEmailDetails::class))
+        }
+
+        should("return email address") {
+            // given
+            val verifiedUser = createVerifiedUser(id = USER_ID, email = EMAIL)
+            whenever(verifiedUserRepository.findById(USER_ID)).thenReturn(verifiedUser)
+
+            // when
+            val email = authService.getEmailAddress(USER_ID)
+
+            // then
+            email shouldBe EMAIL
+            verify(verifiedUserRepository, times(1)).findById(USER_ID)
+        }
+
+        should("return UserNotFound when getting email address") {
+            // given
+            whenever(verifiedUserRepository.findById(USER_ID)).thenReturn(null)
+
+            // when & then
+            shouldThrowExactly<UserNotFoundException> {
+                authService.getEmailAddress(USER_ID)
+            }
+
+            verify(verifiedUserRepository, times(1)).findById(USER_ID)
         }
     },
 )

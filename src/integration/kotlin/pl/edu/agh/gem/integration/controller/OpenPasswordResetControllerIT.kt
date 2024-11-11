@@ -10,17 +10,14 @@ import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.http.HttpStatus.OK
 import pl.edu.agh.gem.assertion.shouldBody
 import pl.edu.agh.gem.assertion.shouldHaveHttpStatus
-import pl.edu.agh.gem.external.dto.userdetailsmanager.toInternalUsernameResponse
 import pl.edu.agh.gem.helper.user.DummyUser.EMAIL
 import pl.edu.agh.gem.helper.user.DummyUser.USER_ID
 import pl.edu.agh.gem.integration.BaseIntegrationSpec
 import pl.edu.agh.gem.integration.ability.ServiceTestClient
 import pl.edu.agh.gem.integration.ability.stubEmailSenderPassword
-import pl.edu.agh.gem.integration.ability.stubGetUsername
 import pl.edu.agh.gem.internal.persistence.PasswordRecoveryCodeRepository
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
 import pl.edu.agh.gem.util.DummyData.DUMMY_CODE
-import pl.edu.agh.gem.util.DummyData.DUMMY_USERNAME
 import pl.edu.agh.gem.util.DummyData.OTHER_DUMMY_CODE
 import pl.edu.agh.gem.util.createPasswordRecoveryCode
 import pl.edu.agh.gem.util.createVerifiedUser
@@ -38,7 +35,6 @@ class OpenPasswordResetControllerIT(
         passwordRecoveryCodeRepository.create(passwordRecoveryCode)
 
         stubEmailSenderPassword()
-        stubGetUsername(DUMMY_USERNAME.toInternalUsernameResponse(), USER_ID)
 
         // when
         val response = service.sendPassword(email = EMAIL.uppercase(), code = DUMMY_CODE)
@@ -67,7 +63,6 @@ class OpenPasswordResetControllerIT(
         passwordRecoveryCodeRepository.create(passwordRecoveryCode)
 
         stubEmailSenderPassword(statusCode = INTERNAL_SERVER_ERROR)
-        stubGetUsername(DUMMY_USERNAME.toInternalUsernameResponse(), USER_ID)
 
         // when
         val response = service.sendPassword(email = EMAIL, code = DUMMY_CODE)

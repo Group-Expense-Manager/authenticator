@@ -118,15 +118,13 @@ class AuthService(
         if (passwordRecoveryCodeRepository.findByUserId(verifiedUser.id) != null) {
             throw EmailRecentlySentException()
         }
-        val username = userDetailsManagerClient.getUsername(verifiedUser.id)
-
         val passwordRecoveryCode = passwordRecoveryCodeRepository.create(
             PasswordRecoveryCode(
                 userId = verifiedUser.id,
                 code = generateCode(),
             ),
         )
-        senderClient.sendPasswordRecoveryEmail(PasswordRecoveryEmailDetails(username, email, passwordRecoveryCode.code))
+        senderClient.sendPasswordRecoveryEmail(PasswordRecoveryEmailDetails(verifiedUser.id, email, passwordRecoveryCode.code))
     }
 
     @Transactional
@@ -136,12 +134,11 @@ class AuthService(
         if (passwordRecoveryCode.code != code) {
             throw PasswordRecoveryException()
         }
-        val username = userDetailsManagerClient.getUsername(verifiedUser.id)
 
         val newPassword = generatePassword()
         verifiedUserRepository.updatePassword(verifiedUser.id, passwordEncoder.encode(newPassword))
         passwordRecoveryCodeRepository.deleteByUserId(verifiedUser.id)
-        senderClient.sendPassword(PasswordEmailDetails(username, email, newPassword))
+        senderClient.sendPassword(PasswordEmailDetails(verifiedUser.id, email, newPassword))
     }
 
     private fun generatePassword(): String {
@@ -155,6 +152,10 @@ class AuthService(
                 append(allChars.random())
             }
         }
+    }
+
+    fun getEmailAddress(userId: String): String {
+        return verifiedUserRepository.findById(userId)?.email ?: throw UserNotFoundException()
     }
 
     companion object {

@@ -164,11 +164,11 @@ fun createPasswordChangeRequest(
 )
 
 fun createPasswordRecoveryEmailDetails(
-    username: String = DUMMY_USERNAME,
+    userId: String = USER_ID,
     email: String = EMAIL,
     code: String = DUMMY_CODE,
 ) = PasswordRecoveryEmailDetails(
-    username = username,
+    userId = userId,
     email = email,
     code = code,
 )
@@ -200,11 +200,11 @@ fun createPasswordRecoveryRequest(
 )
 
 fun createPasswordEmailDetails(
-    username: String = DUMMY_USERNAME,
+    userId: String = USER_ID,
     email: String = EMAIL,
     password: String = DUMMY_PASSWORD,
 ) = PasswordEmailDetails(
-    username = username,
+    userId = userId,
     email = email,
     password = password,
 )
