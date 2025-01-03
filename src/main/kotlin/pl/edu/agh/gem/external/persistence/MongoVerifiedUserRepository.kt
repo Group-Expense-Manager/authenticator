@@ -7,8 +7,10 @@ import org.springframework.data.mongodb.core.query.Update.update
 import org.springframework.stereotype.Repository
 import pl.edu.agh.gem.internal.model.auth.VerifiedUser
 import pl.edu.agh.gem.internal.persistence.VerifiedUserRepository
+import pl.edu.agh.gem.metrics.MeteredRepository
 
 @Repository
+@MeteredRepository
 class MongoVerifiedUserRepository(
     private val mongo: MongoTemplate,
 ) : VerifiedUserRepository {

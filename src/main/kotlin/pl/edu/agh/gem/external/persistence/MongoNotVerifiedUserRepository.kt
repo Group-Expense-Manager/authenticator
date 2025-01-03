@@ -7,9 +7,11 @@ import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Repository
 import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
+import pl.edu.agh.gem.metrics.MeteredRepository
 import java.time.Instant.now
 
 @Repository
+@MeteredRepository
 class MongoNotVerifiedUserRepository(
     private val mongo: MongoTemplate,
 ) : NotVerifiedUserRepository {

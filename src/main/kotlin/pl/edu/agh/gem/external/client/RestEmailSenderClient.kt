@@ -1,7 +1,7 @@
 package pl.edu.agh.gem.external.client
 
 import io.github.resilience4j.retry.annotation.Retry
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.http.HttpEntity
@@ -22,10 +22,12 @@ import pl.edu.agh.gem.internal.client.RetryableEmailSenderClientException
 import pl.edu.agh.gem.internal.model.emailsender.PasswordEmailDetails
 import pl.edu.agh.gem.internal.model.emailsender.PasswordRecoveryEmailDetails
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
+import pl.edu.agh.gem.metrics.MeteredClient
 import pl.edu.agh.gem.paths.Paths.INTERNAL
 import pl.edu.agh.gem.paths.Paths.OPEN
 
 @Component
+@MeteredClient
 class RestEmailSenderClient(
     @Qualifier("EmailSenderClientRestTemplate") private val restTemplate: RestTemplate,
     private val emailSenderClientProperties: EmailSenderClientProperties,
