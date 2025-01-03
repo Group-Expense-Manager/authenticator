@@ -13,34 +13,34 @@ import pl.edu.agh.gem.util.createVerificationEmailDetails
 class EmailSenderClientIT(
     private val emailSenderClient: EmailSenderClient,
 ) : BaseIntegrationSpec({
-    should("send verification email") {
-        // given
+        should("send verification email") {
+            // given
 
-        stubEmailSenderVerification()
+            stubEmailSenderVerification()
 
-        // when & then
-        shouldNotThrowAny {
-            emailSenderClient.sendVerificationEmail(createVerificationEmailDetails())
+            // when & then
+            shouldNotThrowAny {
+                emailSenderClient.sendVerificationEmail(createVerificationEmailDetails())
+            }
         }
-    }
 
-    should("send password-recovery email") {
-        // given
-        stubEmailSenderPasswordRecovery()
+        should("send password-recovery email") {
+            // given
+            stubEmailSenderPasswordRecovery()
 
-        // when & then
-        shouldNotThrowAny {
-            emailSenderClient.sendPasswordRecoveryEmail(createPasswordRecoveryEmailDetails())
+            // when & then
+            shouldNotThrowAny {
+                emailSenderClient.sendPasswordRecoveryEmail(createPasswordRecoveryEmailDetails())
+            }
         }
-    }
 
-    should("send password by email") {
-        // given
-        stubEmailSenderPassword()
+        should("send password by email") {
+            // given
+            stubEmailSenderPassword()
 
-        // when & then
-        shouldNotThrowAny {
-            emailSenderClient.sendPassword(createPasswordEmailDetails())
+            // when & then
+            shouldNotThrowAny {
+                emailSenderClient.sendPassword(createPasswordEmailDetails())
+            }
         }
-    }
-},)
+    })

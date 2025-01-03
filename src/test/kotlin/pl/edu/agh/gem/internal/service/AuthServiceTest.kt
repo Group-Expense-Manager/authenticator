@@ -47,16 +47,16 @@ class AuthServiceTest : ShouldSpec(
         val userDetailsManagerClient = mock<UserDetailsManagerClient>()
         val passwordEncoder = mock<PasswordEncoder>()
 
-        val authService = AuthService(
-            notVerifiedUserRepository,
-            verifiedUserRepository,
-            passwordRecoveryCodeRepository,
-            emailSenderClient,
-            userDetailsManagerClient,
-            emailProperties,
-            passwordEncoder,
-
-        )
+        val authService =
+            AuthService(
+                notVerifiedUserRepository,
+                verifiedUserRepository,
+                passwordRecoveryCodeRepository,
+                emailSenderClient,
+                userDetailsManagerClient,
+                emailProperties,
+                passwordEncoder,
+            )
 
         should("create user") {
             // given
@@ -64,11 +64,12 @@ class AuthServiceTest : ShouldSpec(
             whenever(notVerifiedUserRepository.findByEmail(notVerifiedUser.email)).thenReturn(null)
             whenever(verifiedUserRepository.findByEmail(notVerifiedUser.email)).thenReturn(null)
             whenever(notVerifiedUserRepository.create(notVerifiedUser)).thenReturn(notVerifiedUser)
-            val emailDetails = createVerificationEmailDetails(
-                notVerifiedUser.username,
-                notVerifiedUser.email,
-                notVerifiedUser.code,
-            )
+            val emailDetails =
+                createVerificationEmailDetails(
+                    notVerifiedUser.username,
+                    notVerifiedUser.email,
+                    notVerifiedUser.code,
+                )
 
             // when
             authService.create(notVerifiedUser)

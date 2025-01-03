@@ -30,7 +30,10 @@ class MongoNotVerifiedUserRepository(
         mongo.remove(query, NotVerifiedUserEntity::class.java)
     }
 
-    override fun updateVerificationCode(id: String, newCode: String) {
+    override fun updateVerificationCode(
+        id: String,
+        newCode: String,
+    ) {
         val query = Query(where(NotVerifiedUserEntity::id.name).`is`(id))
         val update = Update()
         update.set(NotVerifiedUserEntity::code.name, newCode)

@@ -18,4 +18,4 @@ class UserDetailsCreationRequestTest : ShouldSpec({
             it.username shouldBe userDetails.username
         }
     }
-},)
+})

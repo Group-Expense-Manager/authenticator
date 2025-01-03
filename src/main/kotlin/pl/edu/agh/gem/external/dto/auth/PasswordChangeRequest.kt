@@ -24,7 +24,6 @@ data class PasswordChangeRequest(
         Pattern(regexp = ".*\\d.*", message = PASSWORD_DIGIT),
         Pattern(regexp = ".*[@#$%^&+=!].*", message = PASSWORD_SPECIAL_CHARACTER),
         Pattern(regexp = "^\\S*$", message = PASSWORD_NOT_WHITESPACE_CHARACTER),
-
     )
     val newPassword: String,
 )

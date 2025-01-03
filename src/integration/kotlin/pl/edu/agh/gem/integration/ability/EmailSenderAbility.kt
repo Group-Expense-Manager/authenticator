@@ -10,7 +10,9 @@ import pl.edu.agh.gem.integration.environment.ProjectConfig
 import pl.edu.agh.gem.paths.Paths.INTERNAL
 
 private fun sendVerificationMailUrl() = "$INTERNAL/verification"
+
 private fun sendPasswordRecoveryMailUrl() = "$INTERNAL/recover-password"
+
 private fun sendPasswordMailUrl() = "$INTERNAL/password"
 
 fun stubEmailSenderVerification(statusCode: HttpStatusCode = HttpStatus.OK) {

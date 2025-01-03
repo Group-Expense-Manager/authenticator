@@ -32,7 +32,6 @@ class AuthService(
     private val emailProperties: EmailProperties,
     private val passwordEncoder: PasswordEncoder,
 ) {
-
     @Transactional
     fun create(notVerifiedUser: NotVerifiedUser) {
         if (isEmailTaken(notVerifiedUser.email)) {
@@ -76,10 +75,11 @@ class AuthService(
         return verifiedUser
     }
 
-    private fun getUserDetails(notVerifiedUser: NotVerifiedUser) = UserDetails(
-        userId = notVerifiedUser.id,
-        username = notVerifiedUser.username,
-    )
+    private fun getUserDetails(notVerifiedUser: NotVerifiedUser) =
+        UserDetails(
+            userId = notVerifiedUser.id,
+            username = notVerifiedUser.username,
+        )
 
     @Transactional
     fun sendVerificationEmail(email: String) {
@@ -99,7 +99,11 @@ class AuthService(
         )
     }
 
-    fun changePassword(userId: String, oldPassword: String, newPassword: String) {
+    fun changePassword(
+        userId: String,
+        oldPassword: String,
+        newPassword: String,
+    ) {
         val verifiedUser = verifiedUserRepository.findById(userId) ?: throw UserNotFoundException()
 
         if (!passwordEncoder.matches(oldPassword, verifiedUser.password)) {
@@ -118,17 +122,21 @@ class AuthService(
         if (passwordRecoveryCodeRepository.findByUserId(verifiedUser.id) != null) {
             throw EmailRecentlySentException()
         }
-        val passwordRecoveryCode = passwordRecoveryCodeRepository.create(
-            PasswordRecoveryCode(
-                userId = verifiedUser.id,
-                code = generateCode(),
-            ),
-        )
+        val passwordRecoveryCode =
+            passwordRecoveryCodeRepository.create(
+                PasswordRecoveryCode(
+                    userId = verifiedUser.id,
+                    code = generateCode(),
+                ),
+            )
         senderClient.sendPasswordRecoveryEmail(PasswordRecoveryEmailDetails(verifiedUser.id, email, passwordRecoveryCode.code))
     }
 
     @Transactional
-    fun sendPasswordEmail(email: String, code: String) {
+    fun sendPasswordEmail(
+        email: String,
+        code: String,
+    ) {
         val verifiedUser = verifiedUserRepository.findByEmail(email) ?: throw PasswordRecoveryException()
         val passwordRecoveryCode = passwordRecoveryCodeRepository.findByUserId(verifiedUser.id) ?: throw PasswordRecoveryException()
         if (passwordRecoveryCode.code != code) {
@@ -182,9 +190,15 @@ data class EmailProperties(
 )
 
 class DuplicateEmailException(email: String) : RuntimeException("Email address $email is already taken")
+
 class UserNotVerifiedException : RuntimeException("User is not verified")
+
 class UserNotFoundException : RuntimeException("User not found")
+
 class VerificationException(email: String) : RuntimeException("Verification failed for $email")
+
 class EmailRecentlySentException : RuntimeException("Email was recently sent, please wait 5 minutes")
+
 class WrongPasswordException : RuntimeException("Wrong password")
+
 class PasswordRecoveryException : RuntimeException("Invalid password recovery link")

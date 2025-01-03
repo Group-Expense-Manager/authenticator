@@ -28,7 +28,10 @@ class MongoVerifiedUserRepository(
         return mongo.insert(verifiedUser.toEntity()).toDomain()
     }
 
-    override fun updatePassword(id: String, password: String) {
+    override fun updatePassword(
+        id: String,
+        password: String,
+    ) {
         mongo.updateFirst(Query.query(where("id").`is`(id)), update("password", password), VerifiedUserEntity::class.java)
     }
 

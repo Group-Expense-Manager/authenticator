@@ -11,11 +11,12 @@ class VerificationEmailRequestTest : ShouldSpec({
 
     should("map correct from Verification") {
         // given
-        val emailDetails = createVerificationEmailDetails(
-            username = DUMMY_USERNAME,
-            email = EMAIL,
-            code = DUMMY_CODE,
-        )
+        val emailDetails =
+            createVerificationEmailDetails(
+                username = DUMMY_USERNAME,
+                email = EMAIL,
+                code = DUMMY_CODE,
+            )
         // when
         val sendVerificationRequest = VerificationEmailRequest.from(emailDetails)
 
@@ -26,4 +27,4 @@ class VerificationEmailRequestTest : ShouldSpec({
             it.code shouldBe DUMMY_CODE
         }
     }
-},)
+})

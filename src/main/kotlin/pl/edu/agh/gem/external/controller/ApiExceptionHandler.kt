@@ -38,7 +38,6 @@ import pl.edu.agh.gem.internal.service.WrongPasswordException
 @ControllerAdvice
 @Order(LOWEST_PRECEDENCE)
 class ApiExceptionHandler {
-
     @ExceptionHandler(DuplicateEmailException::class)
     fun handleDuplicateEmailException(exception: DuplicateEmailException): ResponseEntity<SimpleErrorsHolder> {
         return ResponseEntity(handleError(exception), CONFLICT)
@@ -81,49 +80,40 @@ class ApiExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
-    fun handleMethodArgumentNotValidException(
-        exception: MethodArgumentNotValidException,
-    ): ResponseEntity<SimpleErrorsHolder> {
+    fun handleMethodArgumentNotValidException(exception: MethodArgumentNotValidException): ResponseEntity<SimpleErrorsHolder> {
         return ResponseEntity(handleNotValidException(exception), BAD_REQUEST)
     }
 
     @ExceptionHandler(RetryableUserDetailsManagerClientException::class)
-    fun handleRetryableUserDetailsManagerClientException(
-        exception: RetryableUserDetailsManagerClientException,
-    ): ResponseEntity<SimpleErrorsHolder> {
+    fun handleRetryableUserDetailsManagerClientException(exception: RetryableUserDetailsManagerClientException): ResponseEntity<SimpleErrorsHolder> {
         return ResponseEntity(handleError(exception), INTERNAL_SERVER_ERROR)
     }
 
     @ExceptionHandler(UserDetailsManagerClientException::class)
-    fun handleUserDetailsManagerClientException(
-        exception: UserDetailsManagerClientException,
-    ): ResponseEntity<SimpleErrorsHolder> {
+    fun handleUserDetailsManagerClientException(exception: UserDetailsManagerClientException): ResponseEntity<SimpleErrorsHolder> {
         return ResponseEntity(handleError(exception), INTERNAL_SERVER_ERROR)
     }
 
     @ExceptionHandler(RetryableEmailSenderClientException::class)
-    fun handleRetryableEmailSenderClientException(
-        exception: RetryableEmailSenderClientException,
-    ): ResponseEntity<SimpleErrorsHolder> {
+    fun handleRetryableEmailSenderClientException(exception: RetryableEmailSenderClientException): ResponseEntity<SimpleErrorsHolder> {
         return ResponseEntity(handleError(exception), INTERNAL_SERVER_ERROR)
     }
 
     @ExceptionHandler(EmailSenderClientException::class)
-    fun handleEmailSenderClientException(
-        exception: EmailSenderClientException,
-    ): ResponseEntity<SimpleErrorsHolder> {
+    fun handleEmailSenderClientException(exception: EmailSenderClientException): ResponseEntity<SimpleErrorsHolder> {
         return ResponseEntity(handleError(exception), INTERNAL_SERVER_ERROR)
     }
 
     private fun handleNotValidException(exception: MethodArgumentNotValidException): SimpleErrorsHolder {
-        val errors = exception.bindingResult.fieldErrors
-            .map { error ->
-                SimpleError()
-                    .withCode("VALIDATION_ERROR")
-                    .withDetails(error.field)
-                    .withUserMessage(error.defaultMessage)
-                    .withMessage(error.defaultMessage)
-            }
+        val errors =
+            exception.bindingResult.fieldErrors
+                .map { error ->
+                    SimpleError()
+                        .withCode("VALIDATION_ERROR")
+                        .withDetails(error.field)
+                        .withUserMessage(error.defaultMessage)
+                        .withMessage(error.defaultMessage)
+                }
         return SimpleErrorsHolder(errors).apply {
             jacksonObjectMapper().writeValueAsString(this)
         }

@@ -15,4 +15,4 @@ class EmailAddressResponseTest : ShouldSpec({
         // then
         emailAddressResponse.email shouldBe email
     }
-},)
+})

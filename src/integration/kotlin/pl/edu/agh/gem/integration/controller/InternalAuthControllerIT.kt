@@ -20,27 +20,27 @@ class InternalAuthControllerIT(
     private val verifiedUserRepository: VerifiedUserRepository,
 ) : BaseIntegrationSpec({
 
-    should("return email address") {
-        // given
-        saveVerifiedUser(id = USER_ID, verifiedUserRepository = verifiedUserRepository)
+        should("return email address") {
+            // given
+            saveVerifiedUser(id = USER_ID, verifiedUserRepository = verifiedUserRepository)
 
-        // when
-        val response = service.getEmailAddress(USER_ID)
+            // when
+            val response = service.getEmailAddress(USER_ID)
 
-        // then
-        response shouldHaveHttpStatus OK
-        response.shouldBody<EmailAddressResponse> {
-            email shouldBe EMAIL
+            // then
+            response shouldHaveHttpStatus OK
+            response.shouldBody<EmailAddressResponse> {
+                email shouldBe EMAIL
+            }
         }
-    }
-    should("return UserNotFound when user don't exist") {
-        // given & when
-        val response = service.getEmailAddress(USER_ID)
+        should("return UserNotFound when user don't exist") {
+            // given & when
+            val response = service.getEmailAddress(USER_ID)
 
-        // then
-        response shouldHaveHttpStatus NOT_FOUND
-        response shouldHaveErrors {
-            errors.first().code shouldBe UserNotFoundException::class.simpleName
+            // then
+            response shouldHaveHttpStatus NOT_FOUND
+            response shouldHaveErrors {
+                errors.first().code shouldBe UserNotFoundException::class.simpleName
+            }
         }
-    }
-},)
+    })

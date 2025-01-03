@@ -59,7 +59,7 @@ dependencyResolutionManagement {
             library("kotest-property", "io.kotest", "kotest-property").versionRef("kotest")
             library("kotest-framework-datatest", "io.kotest", "kotest-framework-datatest").versionRef("kotest")
             library("kotest-testcontainers", "io.kotest.extensions", "kotest-extensions-testcontainers").version(
-                    "2.0.2",
+                "2.0.2",
             )
             library("mockito", "org.mockito.kotlin:mockito-kotlin:5.4.0")
             library("archunit", "com.tngtech.archunit:archunit-junit5:1.3.0")
@@ -87,7 +87,6 @@ dependencyResolutionManagement {
                     "kotest-spring",
                     "kotest-wiremock",
                     "kotest-testcontainers",
-
                 ),
             )
 

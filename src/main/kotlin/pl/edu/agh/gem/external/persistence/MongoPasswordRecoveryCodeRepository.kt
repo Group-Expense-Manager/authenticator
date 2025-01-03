@@ -27,9 +27,10 @@ class MongoPasswordRecoveryCodeRepository(
         mongo.remove(query, PasswordRecoveryCodeEntity::class.java)
     }
 
-    private fun PasswordRecoveryCode.toEntity() = PasswordRecoveryCodeEntity(
-        userId = userId,
-        code = code,
-        createdAt = createdAt,
-    )
+    private fun PasswordRecoveryCode.toEntity() =
+        PasswordRecoveryCodeEntity(
+            userId = userId,
+            code = code,
+            createdAt = createdAt,
+        )
 }

@@ -11,7 +11,6 @@ data class VerifiedUserEntity(
     val email: String,
     val password: String,
 ) {
-
     fun toDomain() =
         VerifiedUser(
             id = id,

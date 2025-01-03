@@ -10,7 +10,6 @@ import java.time.Duration
 
 @Configuration
 class ClientConfig {
-
     @Bean
     @Qualifier("EmailSenderClientRestTemplate")
     fun emailSenderClientRestTemplate(

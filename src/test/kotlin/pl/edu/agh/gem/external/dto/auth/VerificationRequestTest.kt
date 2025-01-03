@@ -8,10 +8,11 @@ class VerificationRequestTest : ShouldSpec({
 
     should("map correct to Verification") {
         // given
-        val verificationRequest = createVerificationRequest(
-            email = "my@Mail.com",
-            code = "123456",
-        )
+        val verificationRequest =
+            createVerificationRequest(
+                email = "my@Mail.com",
+                code = "123456",
+            )
         // when
         val verification = verificationRequest.toDomain()
 
@@ -21,4 +22,4 @@ class VerificationRequestTest : ShouldSpec({
             it.code shouldBe "123456"
         }
     }
-},)
+})
