@@ -78,7 +78,6 @@ fun createVerifiedUser(
     id: String = USER_ID,
     email: String = EMAIL,
     password: String = "encodedPassword",
-
 ) = VerifiedUser(
     id = id,
     email = email,
@@ -122,17 +121,15 @@ fun createVerification(
     code = code,
 )
 
-fun createVerificationEmailRequest(
-    email: String = EMAIL,
-) = VerificationEmailRequest(
-    email = email,
-)
+fun createVerificationEmailRequest(email: String = EMAIL) =
+    VerificationEmailRequest(
+        email = email,
+    )
 
 fun createVerificationEmailDetails(
     username: String = DUMMY_USERNAME,
     email: String = EMAIL,
     code: String = DUMMY_CODE,
-
 ) = VerificationEmailDetails(
     username = username,
     email = email,
@@ -193,11 +190,10 @@ fun createPasswordRecoveryCode(
     createdAt = createdAt,
 )
 
-fun createPasswordRecoveryRequest(
-    email: String = EMAIL,
-) = PasswordRecoveryRequest(
-    email = email,
-)
+fun createPasswordRecoveryRequest(email: String = EMAIL) =
+    PasswordRecoveryRequest(
+        email = email,
+    )
 
 fun createPasswordEmailDetails(
     userId: String = USER_ID,

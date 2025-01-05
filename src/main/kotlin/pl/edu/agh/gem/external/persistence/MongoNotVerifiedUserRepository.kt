@@ -7,9 +7,11 @@ import org.springframework.data.mongodb.core.query.Update
 import org.springframework.stereotype.Repository
 import pl.edu.agh.gem.internal.model.auth.NotVerifiedUser
 import pl.edu.agh.gem.internal.persistence.NotVerifiedUserRepository
+import pl.edu.agh.gem.metrics.MeteredRepository
 import java.time.Instant.now
 
 @Repository
+@MeteredRepository
 class MongoNotVerifiedUserRepository(
     private val mongo: MongoTemplate,
 ) : NotVerifiedUserRepository {
@@ -28,7 +30,10 @@ class MongoNotVerifiedUserRepository(
         mongo.remove(query, NotVerifiedUserEntity::class.java)
     }
 
-    override fun updateVerificationCode(id: String, newCode: String) {
+    override fun updateVerificationCode(
+        id: String,
+        newCode: String,
+    ) {
         val query = Query(where(NotVerifiedUserEntity::id.name).`is`(id))
         val update = Update()
         update.set(NotVerifiedUserEntity::code.name, newCode)

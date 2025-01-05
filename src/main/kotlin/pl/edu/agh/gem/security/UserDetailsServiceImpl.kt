@@ -10,7 +10,6 @@ class UserDetailsServiceImpl(
     private val notVerifiedUserRepository: NotVerifiedUserRepository,
     private val verifiedUserRepository: VerifiedUserRepository,
 ) : UserDetailsService {
-
     override fun loadUserByUsername(email: String?): UserDetails {
         email ?: throw BadCredentialsException("Bad credentials")
 

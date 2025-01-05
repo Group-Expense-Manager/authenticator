@@ -1,7 +1,7 @@
 package pl.edu.agh.gem.external.client
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.resilience4j.retry.annotation.Retry
-import mu.KotlinLogging
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.http.HttpEntity
@@ -22,17 +22,17 @@ import pl.edu.agh.gem.internal.client.RetryableEmailSenderClientException
 import pl.edu.agh.gem.internal.model.emailsender.PasswordEmailDetails
 import pl.edu.agh.gem.internal.model.emailsender.PasswordRecoveryEmailDetails
 import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
+import pl.edu.agh.gem.metrics.MeteredClient
 import pl.edu.agh.gem.paths.Paths.INTERNAL
 import pl.edu.agh.gem.paths.Paths.OPEN
 
 @Component
+@MeteredClient
 class RestEmailSenderClient(
     @Qualifier("EmailSenderClientRestTemplate") private val restTemplate: RestTemplate,
     private val emailSenderClientProperties: EmailSenderClientProperties,
     private val urlProperties: UrlProperties,
-
 ) : EmailSenderClient {
-
     @Retry(name = "emailSender")
     override fun sendVerificationEmail(verificationEmailDetails: VerificationEmailDetails) {
         try {
@@ -96,16 +96,16 @@ class RestEmailSenderClient(
 
     fun PasswordRecoveryEmailDetails.toPasswordRecoveryEmailRequest() = PasswordRecoveryEmailRequest(userId, email, generateLink(email, code))
 
-    private fun generateLink(email: String, code: String) = "${urlProperties.gemUrl}$OPEN/reset-password?email=$email&code=$code"
+    private fun generateLink(
+        email: String,
+        code: String,
+    ) = "${urlProperties.gemUrl}$OPEN/reset-password?email=$email&code=$code"
 
-    private fun resolveVerificationAddress() =
-        "${emailSenderClientProperties.url}/$INTERNAL/verification"
+    private fun resolveVerificationAddress() = "${emailSenderClientProperties.url}/$INTERNAL/verification"
 
-    private fun resolvePasswordRecoveryAddress() =
-        "${emailSenderClientProperties.url}/$INTERNAL/recover-password"
+    private fun resolvePasswordRecoveryAddress() = "${emailSenderClientProperties.url}/$INTERNAL/recover-password"
 
-    private fun resolvePasswordAddress() =
-        "${emailSenderClientProperties.url}/$INTERNAL/password"
+    private fun resolvePasswordAddress() = "${emailSenderClientProperties.url}/$INTERNAL/password"
 
     companion object {
         private val logger = KotlinLogging.logger {}

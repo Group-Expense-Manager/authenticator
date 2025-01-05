@@ -6,7 +6,9 @@ import pl.edu.agh.gem.internal.model.emailsender.VerificationEmailDetails
 
 interface EmailSenderClient {
     fun sendVerificationEmail(verificationEmailDetails: VerificationEmailDetails)
+
     fun sendPasswordRecoveryEmail(passwordRecoveryEmailDetails: PasswordRecoveryEmailDetails)
+
     fun sendPassword(passwordEmailDetails: PasswordEmailDetails)
 }
 

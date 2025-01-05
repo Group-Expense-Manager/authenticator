@@ -40,72 +40,72 @@ class ExternalAuthControllerIT(
     private val verifiedUserRepository: VerifiedUserRepository,
 ) : BaseIntegrationSpec({
 
-    should("change password") {
-        // given
-        val passwordChangeRequest = createPasswordChangeRequest(oldPassword = DUMMY_PASSWORD, newPassword = OTHER_DUMMY_PASSWORD)
-        saveVerifiedUser(id = USER_ID, password = passwordEncoder.encode(DUMMY_PASSWORD), verifiedUserRepository = verifiedUserRepository)
+        should("change password") {
+            // given
+            val passwordChangeRequest = createPasswordChangeRequest(oldPassword = DUMMY_PASSWORD, newPassword = OTHER_DUMMY_PASSWORD)
+            saveVerifiedUser(id = USER_ID, password = passwordEncoder.encode(DUMMY_PASSWORD), verifiedUserRepository = verifiedUserRepository)
 
-        // when
-        val response = service.changePassword(passwordChangeRequest, createGemUser(USER_ID, EMAIL))
-
-        // then
-        response shouldHaveHttpStatus OK
-
-        verifiedUserRepository.findById(USER_ID).also {
-            it.shouldNotBeNull()
-            passwordEncoder.matches(OTHER_DUMMY_PASSWORD, it.password).shouldBeTrue()
-        }
-    }
-    context("return validation exception cause:") {
-        withData(
-            nameFn = { it.first },
-            Pair(PASSWORD_NOT_BLANK, createPasswordChangeRequest(oldPassword = "")),
-            Pair(PASSWORD_NOT_BLANK, createPasswordChangeRequest(newPassword = "")),
-            Pair(MIN_PASSWORD_LENGTH, createPasswordChangeRequest(newPassword = "pswd")),
-            Pair(MAX_PASSWORD_LENGTH, createPasswordChangeRequest(newPassword = "passwordpasswordpasswordpassword")),
-            Pair(PASSWORD_LOWERCASE, createPasswordChangeRequest(newPassword = "PASSWORD")),
-            Pair(PASSWORD_UPPERCASE, createPasswordChangeRequest(newPassword = "password")),
-            Pair(PASSWORD_DIGIT, createPasswordChangeRequest(newPassword = "password")),
-            Pair(PASSWORD_SPECIAL_CHARACTER, createPasswordChangeRequest(newPassword = "Password")),
-            Pair(PASSWORD_NOT_WHITESPACE_CHARACTER, createPasswordChangeRequest(newPassword = "My Password")),
-        ) { (expectedMessage, registrationRequest) ->
             // when
-            val response = service.changePassword(registrationRequest, GemUser(USER_ID, EMAIL))
+            val response = service.changePassword(passwordChangeRequest, createGemUser(USER_ID, EMAIL))
+
+            // then
+            response shouldHaveHttpStatus OK
+
+            verifiedUserRepository.findById(USER_ID).also {
+                it.shouldNotBeNull()
+                passwordEncoder.matches(OTHER_DUMMY_PASSWORD, it.password).shouldBeTrue()
+            }
+        }
+        context("return validation exception cause:") {
+            withData(
+                nameFn = { it.first },
+                Pair(PASSWORD_NOT_BLANK, createPasswordChangeRequest(oldPassword = "")),
+                Pair(PASSWORD_NOT_BLANK, createPasswordChangeRequest(newPassword = "")),
+                Pair(MIN_PASSWORD_LENGTH, createPasswordChangeRequest(newPassword = "pswd")),
+                Pair(MAX_PASSWORD_LENGTH, createPasswordChangeRequest(newPassword = "passwordpasswordpasswordpassword")),
+                Pair(PASSWORD_LOWERCASE, createPasswordChangeRequest(newPassword = "PASSWORD")),
+                Pair(PASSWORD_UPPERCASE, createPasswordChangeRequest(newPassword = "password")),
+                Pair(PASSWORD_DIGIT, createPasswordChangeRequest(newPassword = "password")),
+                Pair(PASSWORD_SPECIAL_CHARACTER, createPasswordChangeRequest(newPassword = "Password")),
+                Pair(PASSWORD_NOT_WHITESPACE_CHARACTER, createPasswordChangeRequest(newPassword = "My Password")),
+            ) { (expectedMessage, registrationRequest) ->
+                // when
+                val response = service.changePassword(registrationRequest, GemUser(USER_ID, EMAIL))
+
+                // then
+                response shouldHaveHttpStatus BAD_REQUEST
+                response shouldHaveValidationError expectedMessage
+            }
+        }
+
+        should("return UserNotFoundException when user does not exist") {
+            // given
+            val passwordChangeRequest = createPasswordChangeRequest(oldPassword = DUMMY_PASSWORD, newPassword = OTHER_DUMMY_PASSWORD)
+
+            // when
+            val response = service.changePassword(passwordChangeRequest, createGemUser(USER_ID, EMAIL))
+
+            // then
+            response shouldHaveHttpStatus NOT_FOUND
+            response shouldHaveErrors {
+                errors shouldHaveSize 1
+                errors.first().code shouldBe UserNotFoundException::class.simpleName
+            }
+        }
+
+        should("return WrongPasswordException when oldPassword is not correct") {
+            // given
+            val passwordChangeRequest = createPasswordChangeRequest(oldPassword = DUMMY_PASSWORD, newPassword = OTHER_DUMMY_PASSWORD)
+            saveVerifiedUser(id = USER_ID, password = passwordEncoder.encode(OTHER_DUMMY_PASSWORD), verifiedUserRepository = verifiedUserRepository)
+
+            // when
+            val response = service.changePassword(passwordChangeRequest, createGemUser(USER_ID, EMAIL))
 
             // then
             response shouldHaveHttpStatus BAD_REQUEST
-            response shouldHaveValidationError expectedMessage
+            response shouldHaveErrors {
+                errors shouldHaveSize 1
+                errors.first().code shouldBe WrongPasswordException::class.simpleName
+            }
         }
-    }
-
-    should("return UserNotFoundException when user does not exist") {
-        // given
-        val passwordChangeRequest = createPasswordChangeRequest(oldPassword = DUMMY_PASSWORD, newPassword = OTHER_DUMMY_PASSWORD)
-
-        // when
-        val response = service.changePassword(passwordChangeRequest, createGemUser(USER_ID, EMAIL))
-
-        // then
-        response shouldHaveHttpStatus NOT_FOUND
-        response shouldHaveErrors {
-            errors shouldHaveSize 1
-            errors.first().code shouldBe UserNotFoundException::class.simpleName
-        }
-    }
-
-    should("return WrongPasswordException when oldPassword is not correct") {
-        // given
-        val passwordChangeRequest = createPasswordChangeRequest(oldPassword = DUMMY_PASSWORD, newPassword = OTHER_DUMMY_PASSWORD)
-        saveVerifiedUser(id = USER_ID, password = passwordEncoder.encode(OTHER_DUMMY_PASSWORD), verifiedUserRepository = verifiedUserRepository)
-
-        // when
-        val response = service.changePassword(passwordChangeRequest, createGemUser(USER_ID, EMAIL))
-
-        // then
-        response shouldHaveHttpStatus BAD_REQUEST
-        response shouldHaveErrors {
-            errors shouldHaveSize 1
-            errors.first().code shouldBe WrongPasswordException::class.simpleName
-        }
-    }
-},)
+    })

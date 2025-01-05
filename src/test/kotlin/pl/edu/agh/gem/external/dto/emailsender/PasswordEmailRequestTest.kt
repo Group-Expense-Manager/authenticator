@@ -11,11 +11,12 @@ class PasswordEmailRequestTest : ShouldSpec({
 
     should("map correctly from PasswordEmailDetails") {
         // given
-        val passwordEmailDetails = createPasswordEmailDetails(
-            userId = USER_ID,
-            email = EMAIL,
-            password = DUMMY_PASSWORD,
-        )
+        val passwordEmailDetails =
+            createPasswordEmailDetails(
+                userId = USER_ID,
+                email = EMAIL,
+                password = DUMMY_PASSWORD,
+            )
 
         // when
         val passwordRecoveryEmailRequest = PasswordEmailRequest.from(passwordEmailDetails)
@@ -27,4 +28,4 @@ class PasswordEmailRequestTest : ShouldSpec({
             it.password shouldBe DUMMY_PASSWORD
         }
     }
-},)
+})

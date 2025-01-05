@@ -17,7 +17,6 @@ import pl.edu.agh.gem.paths.Paths.INTERNAL
 class InternalAuthController(
     private val authService: AuthService,
 ) {
-
     @GetMapping("/users/{userId}/email", produces = [APPLICATION_JSON_INTERNAL_VER_1])
     @ResponseStatus(OK)
     fun getEmailAddress(

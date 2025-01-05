@@ -18,7 +18,6 @@ import pl.edu.agh.gem.security.GemUserId
 class ExternalAuthController(
     private val authService: AuthService,
 ) {
-
     @PutMapping("change-password", consumes = [APPLICATION_JSON_INTERNAL_VER_1])
     @ResponseStatus(OK)
     fun changePassword(

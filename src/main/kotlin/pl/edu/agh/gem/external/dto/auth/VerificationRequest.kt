@@ -11,8 +11,9 @@ data class VerificationRequest(
     @field:NotBlank(message = CODE_NOT_BLANK)
     val code: String,
 ) {
-    fun toDomain() = Verification(
-        email = email.lowercase(),
-        code = code,
-    )
+    fun toDomain() =
+        Verification(
+            email = email.lowercase(),
+            code = code,
+        )
 }

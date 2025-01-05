@@ -73,430 +73,430 @@ class OpenAuthControllerIT(
     private val passwordRecoveryCodeRepository: PasswordRecoveryCodeRepository,
     private val passwordEncoder: PasswordEncoder,
 ) : BaseIntegrationSpec({
-    should("register user") {
-        // given
-        stubEmailSenderVerification()
-        val registrationRequest = createRegistrationRequest(username = DUMMY_USERNAME, email = EMAIL)
+        should("register user") {
+            // given
+            stubEmailSenderVerification()
+            val registrationRequest = createRegistrationRequest(username = DUMMY_USERNAME, email = EMAIL)
 
-        // when
-        val response = service.register(registrationRequest)
-
-        // then
-        response shouldHaveHttpStatus CREATED
-        notVerifiedUserRepository.findByEmail(EMAIL).also {
-            it.shouldNotBeNull()
-            it.username shouldBe DUMMY_USERNAME
-        }
-    }
-
-    should("rollback when registering user and emailSenderFails") {
-        // given
-        stubEmailSenderVerification(INTERNAL_SERVER_ERROR)
-        val registrationRequest = createRegistrationRequest(email = EMAIL)
-
-        // when
-        val response = service.register(registrationRequest)
-
-        // then
-        response shouldHaveHttpStatus INTERNAL_SERVER_ERROR
-        notVerifiedUserRepository.findByEmail(EMAIL).also {
-            it.shouldBeNull()
-        }
-    }
-
-    context("return validation exception cause:") {
-        withData(
-            nameFn = { it.first },
-            Pair(USERNAME_PATTERN_MESSAGE, createRegistrationRequest(username = "")),
-            Pair(USERNAME_PATTERN_MESSAGE, createRegistrationRequest(username = "oo")),
-            Pair(USERNAME_PATTERN_MESSAGE, createRegistrationRequest(username = "ooooooooooooooooooooo")),
-            Pair(USERNAME_PATTERN_MESSAGE, createRegistrationRequest(username = "user$#")),
-            Pair(EMAIL_NOT_BLANK, createRegistrationRequest(email = "")),
-            Pair(WRONG_EMAIL_FORMAT, createRegistrationRequest(email = "email")),
-            Pair(PASSWORD_NOT_BLANK, createRegistrationRequest(password = "")),
-            Pair(MIN_PASSWORD_LENGTH, createRegistrationRequest(password = "pswd")),
-            Pair(MAX_PASSWORD_LENGTH, createRegistrationRequest(password = "passwordpasswordpasswordpassword")),
-            Pair(PASSWORD_LOWERCASE, createRegistrationRequest(password = "PASSWORD")),
-            Pair(PASSWORD_UPPERCASE, createRegistrationRequest(password = "password")),
-            Pair(PASSWORD_DIGIT, createRegistrationRequest(password = "password")),
-            Pair(PASSWORD_SPECIAL_CHARACTER, createRegistrationRequest(password = "password")),
-            Pair(PASSWORD_NOT_WHITESPACE_CHARACTER, createRegistrationRequest(password = "my password")),
-
-        ) { (expectedMessage, registrationRequest) ->
             // when
             val response = service.register(registrationRequest)
 
             // then
+            response shouldHaveHttpStatus CREATED
+            notVerifiedUserRepository.findByEmail(EMAIL).also {
+                it.shouldNotBeNull()
+                it.username shouldBe DUMMY_USERNAME
+            }
+        }
+
+        should("rollback when registering user and emailSenderFails") {
+            // given
+            stubEmailSenderVerification(INTERNAL_SERVER_ERROR)
+            val registrationRequest = createRegistrationRequest(email = EMAIL)
+
+            // when
+            val response = service.register(registrationRequest)
+
+            // then
+            response shouldHaveHttpStatus INTERNAL_SERVER_ERROR
+            notVerifiedUserRepository.findByEmail(EMAIL).also {
+                it.shouldBeNull()
+            }
+        }
+
+        context("return validation exception cause:") {
+            withData(
+                nameFn = { it.first },
+                Pair(USERNAME_PATTERN_MESSAGE, createRegistrationRequest(username = "")),
+                Pair(USERNAME_PATTERN_MESSAGE, createRegistrationRequest(username = "oo")),
+                Pair(USERNAME_PATTERN_MESSAGE, createRegistrationRequest(username = "ooooooooooooooooooooo")),
+                Pair(USERNAME_PATTERN_MESSAGE, createRegistrationRequest(username = "user$#")),
+                Pair(EMAIL_NOT_BLANK, createRegistrationRequest(email = "")),
+                Pair(WRONG_EMAIL_FORMAT, createRegistrationRequest(email = "email")),
+                Pair(PASSWORD_NOT_BLANK, createRegistrationRequest(password = "")),
+                Pair(MIN_PASSWORD_LENGTH, createRegistrationRequest(password = "pswd")),
+                Pair(MAX_PASSWORD_LENGTH, createRegistrationRequest(password = "passwordpasswordpasswordpassword")),
+                Pair(PASSWORD_LOWERCASE, createRegistrationRequest(password = "PASSWORD")),
+                Pair(PASSWORD_UPPERCASE, createRegistrationRequest(password = "password")),
+                Pair(PASSWORD_DIGIT, createRegistrationRequest(password = "password")),
+                Pair(PASSWORD_SPECIAL_CHARACTER, createRegistrationRequest(password = "password")),
+                Pair(PASSWORD_NOT_WHITESPACE_CHARACTER, createRegistrationRequest(password = "my password")),
+            ) { (expectedMessage, registrationRequest) ->
+                // when
+                val response = service.register(registrationRequest)
+
+                // then
+                response shouldHaveHttpStatus BAD_REQUEST
+                response shouldHaveValidationError expectedMessage
+            }
+        }
+
+        should("return DuplicateEmailException when user with given email already exists") {
+            // given
+            val registrationRequest = createRegistrationRequest(email = EMAIL.uppercase())
+            saveNotVerifiedUser(email = EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
+
+            // when
+            val response = service.register(registrationRequest)
+
+            // then
+            response shouldHaveHttpStatus CONFLICT
+            response shouldHaveErrors {
+                errors.first().code shouldBe DuplicateEmailException::class.simpleName
+            }
+        }
+
+        should("login user") {
+            // given
+            stubEmailSenderVerification()
+            val verifiedUser =
+                saveVerifiedUser(
+                    email = EMAIL,
+                    password = passwordEncoder.encode(DUMMY_PASSWORD),
+                    verifiedUserRepository = verifiedUserRepository,
+                )
+            val loginRequest = createLoginRequest(email = EMAIL.uppercase(), password = DUMMY_PASSWORD)
+
+            // when
+            val response = service.login(loginRequest)
+
+            // then
+            response shouldHaveHttpStatus OK
+            response.shouldBody<LoginResponse> {
+                userId shouldBe verifiedUser.id
+                token.shouldNotBeNull()
+            }
+        }
+
+        should("return validation exception when email is blank") {
+            // given
+            val loginRequest = createLoginRequest(email = "")
+
+            // when
+            val response = service.login(loginRequest)
+
+            // then
             response shouldHaveHttpStatus BAD_REQUEST
-            response shouldHaveValidationError expectedMessage
+            response shouldHaveValidationError EMAIL_NOT_BLANK
         }
-    }
 
-    should("return DuplicateEmailException when user with given email already exists") {
-        // given
-        val registrationRequest = createRegistrationRequest(email = EMAIL.uppercase())
-        saveNotVerifiedUser(email = EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
+        should("return validation exception when password is blank") {
+            // given
+            val loginRequest = createLoginRequest(password = "")
 
-        // when
-        val response = service.register(registrationRequest)
+            // when
+            val response = service.login(loginRequest)
 
-        // then
-        response shouldHaveHttpStatus CONFLICT
-        response shouldHaveErrors {
-            errors.first().code shouldBe DuplicateEmailException::class.simpleName
+            // then
+            response shouldHaveHttpStatus BAD_REQUEST
+            response shouldHaveValidationError PASSWORD_NOT_BLANK
         }
-    }
 
-    should("login user") {
-        // given
-        stubEmailSenderVerification()
-        val verifiedUser = saveVerifiedUser(
-            email = EMAIL,
-            password = passwordEncoder.encode(DUMMY_PASSWORD),
-            verifiedUserRepository = verifiedUserRepository,
-        )
-        val loginRequest = createLoginRequest(email = EMAIL.uppercase(), password = DUMMY_PASSWORD)
+        should("return UserNotVerifiedException when user is not verified") {
+            // given
+            saveNotVerifiedUser(
+                email = EMAIL,
+                password = passwordEncoder.encode(DUMMY_PASSWORD),
+                notVerifiedUserRepository = notVerifiedUserRepository,
+            )
+            val loginRequest = createLoginRequest(email = EMAIL, password = DUMMY_PASSWORD)
 
-        // when
-        val response = service.login(loginRequest)
+            // when
+            val response = service.login(loginRequest)
 
-        // then
-        response shouldHaveHttpStatus OK
-        response.shouldBody<LoginResponse> {
-            userId shouldBe verifiedUser.id
-            token.shouldNotBeNull()
+            // then
+            response shouldHaveHttpStatus FORBIDDEN
+            response shouldHaveErrors {
+                errors.first().code shouldBe UserNotVerifiedException::class.simpleName
+            }
         }
-    }
 
-    should("return validation exception when email is blank") {
-        // given
-        val loginRequest = createLoginRequest(email = "")
+        should("return BadCredentialsException when user is not registered") {
+            // given
+            val loginRequest = createLoginRequest()
 
-        // when
-        val response = service.login(loginRequest)
+            // when
+            val response = service.login(loginRequest)
 
-        // then
-        response shouldHaveHttpStatus BAD_REQUEST
-        response shouldHaveValidationError EMAIL_NOT_BLANK
-    }
-
-    should("return validation exception when password is blank") {
-        // given
-        val loginRequest = createLoginRequest(password = "")
-
-        // when
-        val response = service.login(loginRequest)
-
-        // then
-        response shouldHaveHttpStatus BAD_REQUEST
-        response shouldHaveValidationError PASSWORD_NOT_BLANK
-    }
-
-    should("return UserNotVerifiedException when user is not verified") {
-        // given
-        saveNotVerifiedUser(
-            email = EMAIL,
-            password = passwordEncoder.encode(DUMMY_PASSWORD),
-            notVerifiedUserRepository = notVerifiedUserRepository,
-        )
-        val loginRequest = createLoginRequest(email = EMAIL, password = DUMMY_PASSWORD)
-
-        // when
-        val response = service.login(loginRequest)
-
-        // then
-        response shouldHaveHttpStatus FORBIDDEN
-        response shouldHaveErrors {
-            errors.first().code shouldBe UserNotVerifiedException::class.simpleName
+            // then
+            response shouldHaveHttpStatus BAD_REQUEST
+            response shouldHaveErrors {
+                errors.first().code shouldBe BadCredentialsException::class.simpleName
+            }
         }
-    }
 
-    should("return BadCredentialsException when user is not registered") {
-        // given
-        val loginRequest = createLoginRequest()
+        should("return BadCredentialsException when password is not correct for verified user") {
+            // given
+            saveVerifiedUser(email = EMAIL, password = passwordEncoder.encode(DUMMY_PASSWORD), verifiedUserRepository = verifiedUserRepository)
+            val loginRequest = createLoginRequest(email = EMAIL, password = OTHER_DUMMY_PASSWORD)
 
-        // when
-        val response = service.login(loginRequest)
+            // when
+            val response = service.login(loginRequest)
 
-        // then
-        response shouldHaveHttpStatus BAD_REQUEST
-        response shouldHaveErrors {
-            errors.first().code shouldBe BadCredentialsException::class.simpleName
+            // then
+            response shouldHaveHttpStatus BAD_REQUEST
+            response shouldHaveErrors {
+                errors.first().code shouldBe BadCredentialsException::class.simpleName
+            }
         }
-    }
 
-    should("return BadCredentialsException when password is not correct for verified user") {
-        // given
-        saveVerifiedUser(email = EMAIL, password = passwordEncoder.encode(DUMMY_PASSWORD), verifiedUserRepository = verifiedUserRepository)
-        val loginRequest = createLoginRequest(email = EMAIL, password = OTHER_DUMMY_PASSWORD)
+        should("return BadCredentialsException when password is not correct for not verified user") {
+            // given
+            saveNotVerifiedUser(
+                email = EMAIL,
+                password = passwordEncoder.encode(DUMMY_PASSWORD),
+                notVerifiedUserRepository = notVerifiedUserRepository,
+            )
+            val loginRequest = createLoginRequest(email = EMAIL, password = OTHER_DUMMY_PASSWORD)
 
-        // when
-        val response = service.login(loginRequest)
+            // when
+            val response = service.login(loginRequest)
 
-        // then
-        response shouldHaveHttpStatus BAD_REQUEST
-        response shouldHaveErrors {
-            errors.first().code shouldBe BadCredentialsException::class.simpleName
+            // then
+            response shouldHaveHttpStatus BAD_REQUEST
+            response shouldHaveErrors {
+                errors.first().code shouldBe BadCredentialsException::class.simpleName
+            }
         }
-    }
 
-    should("return BadCredentialsException when password is not correct for not verified user") {
-        // given
-        saveNotVerifiedUser(
-            email = EMAIL,
-            password = passwordEncoder.encode(DUMMY_PASSWORD),
-            notVerifiedUserRepository = notVerifiedUserRepository,
-        )
-        val loginRequest = createLoginRequest(email = EMAIL, password = OTHER_DUMMY_PASSWORD)
+        should("Verify code") {
+            // given
+            val notVerifiedUser = saveNotVerifiedUser(email = EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
+            val verificationRequest = createVerificationRequest(email = EMAIL.uppercase(), code = notVerifiedUser.code)
+            stubUserDetailsCreation(createUserDetailsCreationRequest(notVerifiedUser.id, notVerifiedUser.username))
+            // when
+            val response = service.verify(verificationRequest)
 
-        // when
-        val response = service.login(loginRequest)
-
-        // then
-        response shouldHaveHttpStatus BAD_REQUEST
-        response shouldHaveErrors {
-            errors.first().code shouldBe BadCredentialsException::class.simpleName
+            // then
+            response shouldHaveHttpStatus OK
+            response.shouldBody<VerificationResponse> {
+                userId shouldBe notVerifiedUser.id
+                token.shouldNotBeNull()
+            }
+            notVerifiedUserRepository.findByEmail(EMAIL).also {
+                it.shouldBeNull()
+            }
+            verifiedUserRepository.findByEmail(EMAIL).also {
+                it.shouldNotBeNull()
+            }
         }
-    }
 
-    should("Verify code") {
-        // given
-        val notVerifiedUser = saveNotVerifiedUser(email = EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
-        val verificationRequest = createVerificationRequest(email = EMAIL.uppercase(), code = notVerifiedUser.code)
-        stubUserDetailsCreation(createUserDetailsCreationRequest(notVerifiedUser.id, notVerifiedUser.username))
-        // when
-        val response = service.verify(verificationRequest)
+        should("rollback when verifying user and user details creation fails") {
+            // given
+            val notVerifiedUser = saveNotVerifiedUser(email = EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
+            val verificationRequest = createVerificationRequest(email = EMAIL, code = notVerifiedUser.code)
+            stubUserDetailsCreation(createUserDetailsCreationRequest(notVerifiedUser.id, notVerifiedUser.username), INTERNAL_SERVER_ERROR)
+            // when
+            val response = service.verify(verificationRequest)
 
-        // then
-        response shouldHaveHttpStatus OK
-        response.shouldBody<VerificationResponse> {
-            userId shouldBe notVerifiedUser.id
-            token.shouldNotBeNull()
+            // then
+            response shouldHaveHttpStatus INTERNAL_SERVER_ERROR
+            notVerifiedUserRepository.findByEmail(EMAIL).also {
+                it.shouldNotBeNull()
+            }
+            verifiedUserRepository.findByEmail(EMAIL).also {
+                it.shouldBeNull()
+            }
         }
-        notVerifiedUserRepository.findByEmail(EMAIL).also {
-            it.shouldBeNull()
+
+        should("return validation exception when code is blank") {
+            // given
+            val verificationRequest = createVerificationRequest(code = "")
+
+            // when
+            val response = service.verify(verificationRequest)
+
+            // then
+            response shouldHaveHttpStatus BAD_REQUEST
+            response shouldHaveValidationError CODE_NOT_BLANK
         }
-        verifiedUserRepository.findByEmail(EMAIL).also {
-            it.shouldNotBeNull()
+
+        should("return validation exception when email is blank") {
+            // given
+            val verificationRequest = createVerificationRequest(email = "")
+
+            // when
+            val response = service.verify(verificationRequest)
+
+            // then
+            response shouldHaveHttpStatus BAD_REQUEST
+            response shouldHaveValidationError EMAIL_NOT_BLANK
         }
-    }
 
-    should("rollback when verifying user and user details creation fails") {
-        // given
-        val notVerifiedUser = saveNotVerifiedUser(email = EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
-        val verificationRequest = createVerificationRequest(email = EMAIL, code = notVerifiedUser.code)
-        stubUserDetailsCreation(createUserDetailsCreationRequest(notVerifiedUser.id, notVerifiedUser.username), INTERNAL_SERVER_ERROR)
-        // when
-        val response = service.verify(verificationRequest)
+        should("return UserNotFoundException when verifying user does not exist") {
+            // given
+            val verificationRequest = createVerificationRequest()
 
-        // then
-        response shouldHaveHttpStatus INTERNAL_SERVER_ERROR
-        notVerifiedUserRepository.findByEmail(EMAIL).also {
-            it.shouldNotBeNull()
+            // when
+            val response = service.verify(verificationRequest)
+
+            // then
+            response shouldHaveHttpStatus NOT_FOUND
+            response shouldHaveErrors {
+                errors.first().code shouldBe UserNotFoundException::class.simpleName
+            }
         }
-        verifiedUserRepository.findByEmail(EMAIL).also {
-            it.shouldBeNull()
+
+        should("return VerificationException when verifying and code is invalid") {
+            // given
+            saveNotVerifiedUser(email = EMAIL, code = DUMMY_CODE, notVerifiedUserRepository = notVerifiedUserRepository)
+            val verificationRequest = createVerificationRequest(email = EMAIL, code = OTHER_DUMMY_CODE)
+
+            // when
+            val response = service.verify(verificationRequest)
+
+            // then
+            response shouldHaveHttpStatus BAD_REQUEST
+            response shouldHaveErrors {
+                errors.first().code shouldBe VerificationException::class.simpleName
+            }
         }
-    }
+        should("send verification email") {
+            // given
+            val notVerifiedUser = createNotVerifiedUser(email = EMAIL, updatedCodeAt = now().minus(10, MINUTES))
+            notVerifiedUserRepository.create(notVerifiedUser)
 
-    should("return validation exception when code is blank") {
-        // given
-        val verificationRequest = createVerificationRequest(code = "")
+            stubEmailSenderVerification()
+            val verificationEmailRequest = createVerificationEmailRequest(EMAIL.uppercase())
 
-        // when
-        val response = service.verify(verificationRequest)
+            // when
+            val response = service.sendVerificationEmail(verificationEmailRequest)
 
-        // then
-        response shouldHaveHttpStatus BAD_REQUEST
-        response shouldHaveValidationError CODE_NOT_BLANK
-    }
-
-    should("return validation exception when email is blank") {
-        // given
-        val verificationRequest = createVerificationRequest(email = "")
-
-        // when
-        val response = service.verify(verificationRequest)
-
-        // then
-        response shouldHaveHttpStatus BAD_REQUEST
-        response shouldHaveValidationError EMAIL_NOT_BLANK
-    }
-
-    should("return UserNotFoundException when verifying user does not exist") {
-        // given
-        val verificationRequest = createVerificationRequest()
-
-        // when
-        val response = service.verify(verificationRequest)
-
-        // then
-        response shouldHaveHttpStatus NOT_FOUND
-        response shouldHaveErrors {
-            errors.first().code shouldBe UserNotFoundException::class.simpleName
+            // then
+            response shouldHaveHttpStatus OK
+            notVerifiedUserRepository.findByEmail(EMAIL).also {
+                it.shouldNotBeNull()
+                it.code shouldNotBe notVerifiedUser.code
+            }
         }
-    }
 
-    should("return VerificationException when verifying and code is invalid") {
-        // given
-        saveNotVerifiedUser(email = EMAIL, code = DUMMY_CODE, notVerifiedUserRepository = notVerifiedUserRepository)
-        val verificationRequest = createVerificationRequest(email = EMAIL, code = OTHER_DUMMY_CODE)
+        should("rollback when sending verification email and emailSender fails") {
+            // given
+            val notVerifiedUser = createNotVerifiedUser(email = EMAIL, updatedCodeAt = now().minus(10, MINUTES))
+            notVerifiedUserRepository.create(notVerifiedUser)
 
-        // when
-        val response = service.verify(verificationRequest)
+            stubEmailSenderVerification(INTERNAL_SERVER_ERROR)
+            val verificationEmailRequest = createVerificationEmailRequest(EMAIL)
 
-        // then
-        response shouldHaveHttpStatus BAD_REQUEST
-        response shouldHaveErrors {
-            errors.first().code shouldBe VerificationException::class.simpleName
+            // when
+            val response = service.sendVerificationEmail(verificationEmailRequest)
+
+            // then
+            response shouldHaveHttpStatus INTERNAL_SERVER_ERROR
+            notVerifiedUserRepository.findByEmail(EMAIL).also {
+                it.shouldNotBeNull()
+                it.code shouldBe notVerifiedUser.code
+            }
         }
-    }
-    should("send verification email") {
-        // given
-        val notVerifiedUser = createNotVerifiedUser(email = EMAIL, updatedCodeAt = now().minus(10, MINUTES))
-        notVerifiedUserRepository.create(notVerifiedUser)
 
-        stubEmailSenderVerification()
-        val verificationEmailRequest = createVerificationEmailRequest(EMAIL.uppercase())
+        should("return validation exception when email is blank") {
+            // given
+            val email = ""
+            saveNotVerifiedUser(
+                email = email,
+                updatedCodeAt = now().minus(10, MINUTES),
+                notVerifiedUserRepository = notVerifiedUserRepository,
+            )
+            val verificationEmailRequest = createVerificationEmailRequest(email)
 
-        // when
-        val response = service.sendVerificationEmail(verificationEmailRequest)
+            // when
+            val response = service.sendVerificationEmail(verificationEmailRequest)
 
-        // then
-        response shouldHaveHttpStatus OK
-        notVerifiedUserRepository.findByEmail(EMAIL).also {
-            it.shouldNotBeNull()
-            it.code shouldNotBe notVerifiedUser.code
+            // then
+            response shouldHaveHttpStatus BAD_REQUEST
+            response shouldHaveValidationError EMAIL_NOT_BLANK
         }
-    }
 
-    should("rollback when sending verification email and emailSender fails") {
-        // given
-        val notVerifiedUser = createNotVerifiedUser(email = EMAIL, updatedCodeAt = now().minus(10, MINUTES))
-        notVerifiedUserRepository.create(notVerifiedUser)
+        should("return UserNotFoundException when sending verification and user does not exist") {
+            // given  when
+            val verificationEmailRequest = createVerificationEmailRequest()
+            val response = service.sendVerificationEmail(verificationEmailRequest)
 
-        stubEmailSenderVerification(INTERNAL_SERVER_ERROR)
-        val verificationEmailRequest = createVerificationEmailRequest(EMAIL)
-
-        // when
-        val response = service.sendVerificationEmail(verificationEmailRequest)
-
-        // then
-        response shouldHaveHttpStatus INTERNAL_SERVER_ERROR
-        notVerifiedUserRepository.findByEmail(EMAIL).also {
-            it.shouldNotBeNull()
-            it.code shouldBe notVerifiedUser.code
+            // then
+            response shouldHaveHttpStatus NOT_FOUND
+            response shouldHaveErrors {
+                errors.first().code shouldBe UserNotFoundException::class.simpleName
+            }
         }
-    }
 
-    should("return validation exception when email is blank") {
-        // given
-        val email = ""
-        saveNotVerifiedUser(
-            email = email,
-            updatedCodeAt = now().minus(10, MINUTES),
-            notVerifiedUserRepository = notVerifiedUserRepository,
-        )
-        val verificationEmailRequest = createVerificationEmailRequest(email)
+        should("return EmailRecentlySentException when mail was recently sent") {
+            // given
+            saveNotVerifiedUser(email = EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
+            stubEmailSenderVerification()
+            val verificationEmailRequest = createVerificationEmailRequest(EMAIL)
 
-        // when
-        val response = service.sendVerificationEmail(verificationEmailRequest)
+            // when
+            val response = service.sendVerificationEmail(verificationEmailRequest)
 
-        // then
-        response shouldHaveHttpStatus BAD_REQUEST
-        response shouldHaveValidationError EMAIL_NOT_BLANK
-    }
-
-    should("return UserNotFoundException when sending verification and user does not exist") {
-        // given  when
-        val verificationEmailRequest = createVerificationEmailRequest()
-        val response = service.sendVerificationEmail(verificationEmailRequest)
-
-        // then
-        response shouldHaveHttpStatus NOT_FOUND
-        response shouldHaveErrors {
-            errors.first().code shouldBe UserNotFoundException::class.simpleName
+            // then
+            response shouldHaveHttpStatus TOO_MANY_REQUESTS
+            response shouldHaveErrors {
+                errors.first().code shouldBe EmailRecentlySentException::class.simpleName
+            }
         }
-    }
 
-    should("return EmailRecentlySentException when mail was recently sent") {
-        // given
-        saveNotVerifiedUser(email = EMAIL, notVerifiedUserRepository = notVerifiedUserRepository)
-        stubEmailSenderVerification()
-        val verificationEmailRequest = createVerificationEmailRequest(EMAIL)
+        should("send password-recovery email") {
+            // given
+            saveVerifiedUser(id = USER_ID, email = EMAIL, verifiedUserRepository = verifiedUserRepository)
+            stubEmailSenderPasswordRecovery()
 
-        // when
-        val response = service.sendVerificationEmail(verificationEmailRequest)
+            // when
+            val response = service.recoverPassword(createPasswordRecoveryRequest(EMAIL.uppercase()))
 
-        // then
-        response shouldHaveHttpStatus TOO_MANY_REQUESTS
-        response shouldHaveErrors {
-            errors.first().code shouldBe EmailRecentlySentException::class.simpleName
+            // then
+            response shouldHaveHttpStatus OK
+            passwordRecoveryCodeRepository.findByUserId(USER_ID).also {
+                it.shouldNotBeNull()
+            }
         }
-    }
+        should("rollback when sending password-recovery and sending email fails") {
+            // given
+            saveVerifiedUser(id = USER_ID, email = EMAIL, verifiedUserRepository = verifiedUserRepository)
+            stubEmailSenderPasswordRecovery(INTERNAL_SERVER_ERROR)
 
-    should("send password-recovery email") {
-        // given
-        saveVerifiedUser(id = USER_ID, email = EMAIL, verifiedUserRepository = verifiedUserRepository)
-        stubEmailSenderPasswordRecovery()
+            // when
+            val response = service.recoverPassword(createPasswordRecoveryRequest(EMAIL))
 
-        // when
-        val response = service.recoverPassword(createPasswordRecoveryRequest(EMAIL.uppercase()))
-
-        // then
-        response shouldHaveHttpStatus OK
-        passwordRecoveryCodeRepository.findByUserId(USER_ID).also {
-            it.shouldNotBeNull()
+            // then
+            response shouldHaveHttpStatus INTERNAL_SERVER_ERROR
+            passwordRecoveryCodeRepository.findByUserId(USER_ID).also {
+                it.shouldBeNull()
+            }
         }
-    }
-    should("rollback when sending password-recovery and sending email fails") {
-        // given
-        saveVerifiedUser(id = USER_ID, email = EMAIL, verifiedUserRepository = verifiedUserRepository)
-        stubEmailSenderPasswordRecovery(INTERNAL_SERVER_ERROR)
 
-        // when
-        val response = service.recoverPassword(createPasswordRecoveryRequest(EMAIL))
+        should("return validation exception when recovering password and email is blank") {
+            // given
+            val passwordRecoveryRequest = createPasswordRecoveryRequest("")
 
-        // then
-        response shouldHaveHttpStatus INTERNAL_SERVER_ERROR
-        passwordRecoveryCodeRepository.findByUserId(USER_ID).also {
-            it.shouldBeNull()
+            // when
+            val response = service.recoverPassword(passwordRecoveryRequest)
+
+            // then
+            response shouldHaveHttpStatus BAD_REQUEST
+            response shouldHaveValidationError EMAIL_NOT_BLANK
         }
-    }
 
-    should("return validation exception when recovering password and email is blank") {
-        // given
-        val passwordRecoveryRequest = createPasswordRecoveryRequest("")
+        should("return NOT_FOUND when recovering password and user does not exist") {
+            // given
+            val passwordRecoveryRequest = createPasswordRecoveryRequest(EMAIL)
 
-        // when
-        val response = service.recoverPassword(passwordRecoveryRequest)
+            // when
+            val response = service.recoverPassword(passwordRecoveryRequest)
 
-        // then
-        response shouldHaveHttpStatus BAD_REQUEST
-        response shouldHaveValidationError EMAIL_NOT_BLANK
-    }
+            // then
+            response shouldHaveHttpStatus NOT_FOUND
+        }
 
-    should("return NOT_FOUND when recovering password and user does not exist") {
-        // given
-        val passwordRecoveryRequest = createPasswordRecoveryRequest(EMAIL)
+        should("return TOO_MANY_REQUESTS when recovering password and email was recently sent") {
+            // given
+            val passwordRecoveryRequest = createPasswordRecoveryRequest(EMAIL)
+            saveVerifiedUser(id = USER_ID, email = EMAIL, verifiedUserRepository = verifiedUserRepository)
+            passwordRecoveryCodeRepository.create(createPasswordRecoveryCode(USER_ID))
 
-        // when
-        val response = service.recoverPassword(passwordRecoveryRequest)
+            // when
+            val response = service.recoverPassword(passwordRecoveryRequest)
 
-        // then
-        response shouldHaveHttpStatus NOT_FOUND
-    }
-
-    should("return TOO_MANY_REQUESTS when recovering password and email was recently sent") {
-        // given
-        val passwordRecoveryRequest = createPasswordRecoveryRequest(EMAIL)
-        saveVerifiedUser(id = USER_ID, email = EMAIL, verifiedUserRepository = verifiedUserRepository)
-        passwordRecoveryCodeRepository.create(createPasswordRecoveryCode(USER_ID))
-
-        // when
-        val response = service.recoverPassword(passwordRecoveryRequest)
-
-        // then
-        response shouldHaveHttpStatus TOO_MANY_REQUESTS
-    }
-},)
+            // then
+            response shouldHaveHttpStatus TOO_MANY_REQUESTS
+        }
+    })

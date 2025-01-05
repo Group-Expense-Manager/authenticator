@@ -19,7 +19,6 @@ import pl.edu.agh.gem.security.UserDetailsServiceImpl
 @Configuration
 @EnableWebSecurity
 class AuthConfig {
-
     @Bean
     fun encoder(): PasswordEncoder {
         return BCryptPasswordEncoder()

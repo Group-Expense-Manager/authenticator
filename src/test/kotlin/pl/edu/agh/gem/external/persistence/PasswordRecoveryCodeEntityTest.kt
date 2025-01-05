@@ -19,4 +19,4 @@ class PasswordRecoveryCodeEntityTest : ShouldSpec({
             it.createdAt shouldBe passwordRecoveryCodeEntity.createdAt
         }
     }
-},)
+})

@@ -14,7 +14,10 @@ import pl.edu.agh.gem.paths.Paths.INTERNAL
 
 private fun createUserDetailsUrl() = "$INTERNAL/user-details"
 
-fun stubUserDetailsCreation(requestBody: UserDetailsCreationRequest, statusCode: HttpStatusCode = HttpStatus.CREATED) {
+fun stubUserDetailsCreation(
+    requestBody: UserDetailsCreationRequest,
+    statusCode: HttpStatusCode = HttpStatus.CREATED,
+) {
     wiremock.stubFor(
         post(urlMatching(createUserDetailsUrl()))
             .withRequestBody(

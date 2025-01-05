@@ -14,9 +14,10 @@ data class PasswordRecoveryCodeEntity(
     @Indexed(expireAfter = "PT5M")
     val createdAt: Instant,
 ) {
-    fun toDomain() = PasswordRecoveryCode(
-        userId = userId,
-        code = code,
-        createdAt = createdAt,
-    )
+    fun toDomain() =
+        PasswordRecoveryCode(
+            userId = userId,
+            code = code,
+            createdAt = createdAt,
+        )
 }

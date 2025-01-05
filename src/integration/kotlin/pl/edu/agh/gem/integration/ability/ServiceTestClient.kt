@@ -22,9 +22,10 @@ import java.net.URI
 @Component
 @Lazy
 class ServiceTestClient(applicationContext: WebApplicationContext) {
-    private val webClient = bindToApplicationContext(applicationContext)
-        .configureClient()
-        .build()
+    private val webClient =
+        bindToApplicationContext(applicationContext)
+            .configureClient()
+            .build()
 
     fun register(body: RegistrationRequest): ResponseSpec {
         return webClient.post()
@@ -58,7 +59,10 @@ class ServiceTestClient(applicationContext: WebApplicationContext) {
             .exchange()
     }
 
-    fun changePassword(body: PasswordChangeRequest, gemUser: GemUser): ResponseSpec {
+    fun changePassword(
+        body: PasswordChangeRequest,
+        gemUser: GemUser,
+    ): ResponseSpec {
         return webClient.put()
             .uri(URI("$EXTERNAL/change-password"))
             .headers { it.withAppContentType().withValidatedUser(gemUser) }
@@ -74,7 +78,10 @@ class ServiceTestClient(applicationContext: WebApplicationContext) {
             .exchange()
     }
 
-    fun sendPassword(email: String, code: String): ResponseSpec {
+    fun sendPassword(
+        email: String,
+        code: String,
+    ): ResponseSpec {
         return webClient.get()
             .uri {
                 it.path("$OPEN/reset-password")

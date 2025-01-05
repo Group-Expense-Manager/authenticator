@@ -10,14 +10,14 @@ import pl.edu.agh.gem.util.createUserDetails
 class UserDetailsManagerClientIT(
     private val userDetailsManagerClient: UserDetailsManagerClient,
 ) : BaseIntegrationSpec({
-    should("create userDetails") {
-        // given
-        val userDetails = createUserDetails()
-        stubUserDetailsCreation(userDetails.toUserDetailsCreationRequest())
+        should("create userDetails") {
+            // given
+            val userDetails = createUserDetails()
+            stubUserDetailsCreation(userDetails.toUserDetailsCreationRequest())
 
-        // when & then
-        shouldNotThrowAny {
-            userDetailsManagerClient.createUserDetails(userDetails)
+            // when & then
+            shouldNotThrowAny {
+                userDetailsManagerClient.createUserDetails(userDetails)
+            }
         }
-    }
-},)
+    })
