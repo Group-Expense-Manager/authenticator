@@ -3,7 +3,6 @@ import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
 @Suppress("DSL_SCOPE_VIOLATION")
 plugins {
@@ -119,12 +118,6 @@ kotlin {
     }
 }
 
-ktlint {
-    reporters {
-        reporter(ReporterType.PLAIN)
-    }
-}
-
 sourceSets {
     create("integration") {
         compileClasspath += project.sourceSets["main"].output + project.sourceSets["test"].output
@@ -158,6 +151,7 @@ tasks {
         classpath = sourceSets["integration"].runtimeClasspath
         mustRunAfter("test")
     }
+
     check {
         dependsOn("integration")
     }
