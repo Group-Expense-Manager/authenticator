@@ -479,7 +479,7 @@ components:
            example: "Password123!"
          newPassword:
            type: string
-           description: Nea password.
+           description: New password.
            example: "Password321#"
      EmailAddressResponse:
        type: object
