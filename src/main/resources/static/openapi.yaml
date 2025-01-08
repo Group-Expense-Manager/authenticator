@@ -1,0 +1,549 @@
+openapi: 3.0.1
+info:
+  title: Authentication API
+  version: v1
+  description: API for authentication.
+
+paths:
+  /open/register:
+    post:
+      tags:
+        - Open Group
+      summary: "Register"
+      description: "Register new account"
+      operationId: "register"
+      requestBody:
+        $ref: "#/components/requestBodies/RegistrationRequest"
+      responses:
+        "201":
+          description: "Created"
+        "409":
+          $ref: "#/components/responses/DuplicateEmailException"
+        "400":
+          $ref: "#/components/responses/MethodArgumentNotValidException"
+
+  /open/login:
+    post:
+      tags:
+        - Open Group
+      description: "Login with email and password"
+      operationId: "login"
+      requestBody:
+       $ref: "#/components/requestBodies/LoginRequest"
+      responses:
+        "200":
+          description: "OK"
+          $ref: "#/components/responses/LoginResponse"
+        "400":
+          $ref: "#/components/responses/BadCredentialsException"
+        "403":
+          $ref: "#/components/responses/UserNotVerifiedException"
+
+  /open/verify:
+    post:
+      tags:
+        - Open Group
+      summary: "Verify account"
+      description: "Verify user account"
+      operationId: "verify"
+      requestBody:
+        $ref: "#/components/requestBodies/VerificationRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/VerificationResponse"
+        "404":
+          $ref: "#/components/responses/UserNotFoundException"
+        "400":
+          $ref: "#/components/responses/VerificationException"
+
+  /open/send-verification-email:
+    post:
+      tags:
+        - Open Group
+      summary: "Send verification email"
+      description: "Send new verification email"
+      operationId: "sendVerificationEmail"
+      requestBody:
+        $ref: "#/components/requestBodies/VerificationEmailRequest"
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          $ref: "#/components/responses/MethodArgumentNotValidException"
+        "404":
+          $ref: "#/components/responses/UserNotFoundException"
+        "429":
+          $ref: "#/components/responses/EmailRecentlySentException"
+
+  /open/recover-password:
+    post:
+      tags:
+        - Open Group
+      summary: "Recover password"
+      description: "Send recovery password email"
+      operationId: "recoverPassword"
+      requestBody:
+        $ref: "#/components/requestBodies/PasswordRecoveryRequest"
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          $ref: "#/components/responses/MethodArgumentNotValidException"
+        "404":
+          $ref: "#/components/responses/UserNotFoundException"
+        "429":
+          $ref: "#/components/responses/EmailRecentlySentException"
+
+  /open/reset-password:
+    get:
+      tags:
+        - Open Group
+      summary: "Reset password"
+      description: "Reset password"
+      operationId: "resetPassword"
+      parameters:
+        - $ref: '#/components/parameters/Email'
+        - $ref: '#/components/parameters/Code'
+
+      responses:
+        "200":
+          description: "OK"
+          content:
+            text/html:
+              schema:
+                type: "string"
+        "400":
+          description: "FAILURE"
+          content:
+            text/html:
+              schema:
+                type: "string"
+
+  /external/change-password:
+    put:
+      tags:
+        - External Group
+      summary: "Change password"
+      description: "Change password"
+      operationId: "changePassword"
+      requestBody:
+        $ref: "#/components/requestBodies/PasswordChangeRequest"
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          $ref: "#/components/responses/WrongPasswordException"
+        "404":
+          $ref: "#/components/responses/UserNotFoundException"
+
+
+  /internal/users/{userId}/email:
+    get:
+      tags:
+        - Internal Group
+      summary: "Get email"
+      description: "Get email of the uer"
+      operationId: "getEmailAddress"
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        "200":
+          $ref: "#/components/schemas/EmailAddressResponse"
+        "404":
+          $ref: "#/components/responses/UserNotFoundException"
+
+
+components:
+  requestBodies:
+   RegistrationRequest:
+     description: Registration Request.
+     content:
+       application/vnd.gem.internal.v1+json:
+         schema:
+           $ref: '#/components/schemas/RegistrationRequest'
+         examples:
+           exampleRegistrationRequest:
+             value:
+               username: "user123"
+               email: "user@email.com"
+               password: "Password123!"
+   LoginRequest:
+     description: Login Request.
+     content:
+       application/vnd.gem.internal.v1+json:
+         schema:
+           $ref: '#/components/schemas/LoginRequest'
+         examples:
+           exampleLoginRequest:
+             value:
+               email: "user@email.com"
+               password: "Password123!"
+   VerificationRequest:
+     description: Verification Request.
+     content:
+       application/vnd.gem.internal.v1+json:
+         schema:
+           $ref: '#/components/schemas/VerificationRequest'
+         examples:
+           exampleVerificationRequest:
+             value:
+               email: "user@email.com"
+               code: "A2KF17"
+   VerificationResponse:
+     description: Verification Response.
+     content:
+      application/vnd.gem.internal.v1+json:
+        schema:
+          $ref: '#/components/schemas/VerificationResponse'
+        examples:
+          exampleVerificationResponse:
+            value:
+              userId: "0ddfc155-ad49-47af-a787-af03b0be9a12"
+              token: "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI4OWYxMDE1My1mYTJlLTQ5MzEtYTZlMC0xNDJmODZiZTQ0MzciLCJlbWFpbCI6InBfdsfahd2VsZ2FjZWsucGxAZ21haWwuY29t3Mzg3NDE4NTh9.HVl-quQrqaRjQhRsUH9bhldsfSkiqudcrnaTd9IsNgrI1s"
+   VerificationEmailRequest:
+     description: Verification Email Request.
+     content:
+       application/vnd.gem.internal.v1+json:
+         schema:
+           $ref: '#/components/schemas/VerificationEmailRequest'
+         examples:
+           exampleVerificationEmailRequest:
+             value:
+               email: "user@email.com"
+   PasswordRecoveryRequest:
+     description: Password Recover Request.
+     content:
+       application/vnd.gem.internal.v1+json:
+         schema:
+           $ref: '#/components/schemas/PasswordRecoveryRequest'
+         examples:
+           examplePasswordRecoveryRequest:
+             value:
+               email: "user@email.com"
+   PasswordChangeRequest:
+     description: Password Change Request.
+     content:
+       application/vnd.gem.internal.v1+json:
+         schema:
+           $ref: '#/components/schemas/PasswordChangeRequest'
+         examples:
+           examplePasswordChangeRequest:
+             value:
+               oldPassword: "Password123!"
+               newPassword: "Password321#"
+
+
+  responses:
+    LoginResponse:
+      description: Login Response.
+      content:
+        application/vnd.gem.internal.v1+json:
+          schema:
+            $ref: '#/components/schemas/LoginResponse'
+          examples:
+            exampleLoginResponse:
+              value:
+                userId: "0ddfc155-ad49-47af-a787-af03b0be9a12"
+                token: "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI4OWYxMDE1My1mYTJlLTQ5MzEtYTZlMC0xNDJmODZiZTQ0MzciLCJlbWFpbCI6InBfdsfahd2VsZ2FjZWsucGxAZ21haWwuY29t3Mzg3NDE4NTh9.HVl-quQrqaRjQhRsUH9bhldsfSkiqudcrnaTd9IsNgrI1s"
+    EmailAddressResponse:
+      description: Email Address Request.
+      content:
+        application/vnd.gem.internal.v1+json:
+          schema:
+            $ref: '#/components/schemas/EmailAddressResponse'
+          examples:
+            exampleEmailAddressResponse:
+              value:
+                email: "user@email.com"
+    VerificationResponse:
+      description: Verification Response.
+      content:
+        application/vnd.gem.internal.v1+json:
+          schema:
+            $ref: '#/components/schemas/VerificationResponse'
+          examples:
+            exampleVerificationResponse:
+              value:
+                userId: "0ddfc155-ad49-47af-a787-af03b0be9a12"
+                token: "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI4OWYxMDE1My1mYTJlLTQ5MzEtYTZlMC0xNDJmODZiZTQ0MzciLCJlbWFpbCI6InBfdsfahd2VsZ2FjZWsucGxAZ21haWwuY29t3Mzg3NDE4NTh9.HVl-quQrqaRjQhRsUH9bhldsfSkiqudcrnaTd9IsNgrI1s"
+
+    DuplicateEmailException:
+      description: Email address is already taken
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SimpleErrorsHolder'
+          examples:
+            exampleDuplicateEmailException:
+              value:
+                errors:
+                  - code: "DuplicateEmailException"
+                    details: "DuplicateEmailException"
+                    message: "Email address $email is already taken"
+                    userMessage: "Email address $email is already taken"
+    UserNotVerifiedException:
+      description: User is not verified
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SimpleErrorsHolder'
+          examples:
+            exampleUserNotVerifiedException:
+              value:
+                errors:
+                  - code: "UserNotVerifiedException"
+                    details: "UserNotVerifiedException"
+                    message: "User is not verified"
+                    userMessage: "User is not verified"
+    UserNotFoundException:
+      description: User not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SimpleErrorsHolder'
+          examples:
+            exampleUserNotFoundException:
+              value:
+                errors:
+                  - code: "UserNotFoundException"
+                    details: "UserNotFoundException"
+                    message: "User not found"
+                    userMessage: "User not found"
+    VerificationException:
+      description: Verification failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SimpleErrorsHolder'
+          examples:
+            exampleVerificationException:
+              value:
+                errors:
+                  - code: "VerificationException"
+                    details: "VerificationException"
+                    message: "Verification failed for $email"
+                    userMessage: "Verification failed for $email"
+    EmailRecentlySentException:
+      description: Email was recently sent, please wait 5 minutes
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SimpleErrorsHolder'
+          examples:
+            exampleEmailRecentlySentException:
+              value:
+                errors:
+                  - code: "EmailRecentlySentException"
+                    details: "EmailRecentlySentException"
+                    message: "Email was recently sent, please wait 5 minutes"
+                    userMessage: "Email was recently sent, please wait 5 minutes"
+    WrongPasswordException:
+      description: Wrong password
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SimpleErrorsHolder'
+          examples:
+            exampleWrongPasswordException:
+              value:
+                errors:
+                  - code: "WrongPasswordException"
+                    details: "WrongPasswordException"
+                    message: "Wrong password"
+                    userMessage: "Wrong password"
+    PasswordRecoveryException:
+      description: Invalid password recovery link
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SimpleErrorsHolder'
+          examples:
+            examplePasswordRecoveryException:
+              value:
+                errors:
+                  - code: "PasswordRecoveryException"
+                    details: "PasswordRecoveryException"
+                    message: "Invalid password recovery link"
+                    userMessage: "Invalid password recovery link"
+    MethodArgumentNotValidException:
+      description: Body is not valid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SimpleErrorsHolder'
+          examples:
+            exampleMethodArgumentNotValidException:
+              value:
+                errors:
+                  - code: "VALIDATION_ERROR"
+                    details: "MethodArgumentNotValidException"
+                    message: "Body is not valid"
+                    userMessage: "Body is not valid"
+    BadCredentialsException:
+      description: Bad credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SimpleErrorsHolder'
+          examples:
+            exampleBadCredentialsException:
+              value:
+                errors:
+                  - code: "BadCredentialsException"
+                    details: "BadCredentialsException"
+                    message: "Bad credentials"
+                    userMessage: "Bad credentials"
+
+  schemas:
+
+     RegistrationRequest:
+       type: object
+       properties:
+         username:
+           type: string
+           description: Name of the user.
+           example: "user123"
+         email:
+           type: string
+           description: Email of the user.
+           example: "user@email.com"
+         password:
+           type: string
+           description: Password of the user.
+           example: "Password123!"
+     LoginRequest:
+       type: object
+       properties:
+         email:
+           type: string
+           description: Email of the user.
+           example: "user@email.com"
+         password:
+           type: string
+           description: Password of the user.
+           example: "Password123!"
+     LoginResponse:
+       type: object
+       properties:
+         userId:
+           type: string
+           description: The ID of the user.
+           example: "0ddfc155-ad49-47af-a787-af03b0be9a12"
+         token:
+           type: string
+           description: Authentication token.
+           example: "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI4OWYxMDE1My1mYTJlLTQ5MzEtYTZlMC0xNDJmODZiZTQ0MzciLCJlbWFpbCI6InBfdsfahd2VsZ2FjZWsucGxAZ21haWwuY29t3Mzg3NDE4NTh9.HVl-quQrqaRjQhRsUH9bhldsfSkiqudcrnaTd9IsNgrI1s"
+     VerificationRequest:
+       type: object
+       properties:
+         email:
+           type: string
+           description: Email of the user.
+           example: "user@email.com"
+         code:
+           type: string
+           description: Verification code.
+           example: "A2KF17"
+     VerificationResponse:
+       type: object
+       properties:
+         userId:
+           type: string
+           description: The ID of the user.
+           example: "0ddfc155-ad49-47af-a787-af03b0be9a12"
+         token:
+           type: string
+           description: Authentication token.
+           example: "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI4OWYxMDE1My1mYTJlLTQ5MzEtYTZlMC0xNDJmODZiZTQ0MzciLCJlbWFpbCI6InBfdsfahd2VsZ2FjZWsucGxAZ21haWwuY29t3Mzg3NDE4NTh9.HVl-quQrqaRjQhRsUH9bhldsfSkiqudcrnaTd9IsNgrI1s"
+
+     VerificationEmailRequest:
+       type: object
+       properties:
+         email:
+           type: string
+           description: Email of the user.
+           example: "user@email.com"
+     PasswordRecoveryRequest:
+       type: object
+       properties:
+         email:
+           type: string
+           description: Email of the user.
+           example: "user@email.com"
+     PasswordChangeRequest:
+       type: object
+       properties:
+         oldPassword:
+           type: string
+           description: Old password.
+           example: "Password123!"
+         newPassword:
+           type: string
+           description: Nea password.
+           example: "Password321#"
+     EmailAddressResponse:
+       type: object
+       properties:
+         email:
+           type: string
+           description: Email of the user.
+           example: "user@email.com"
+     SimpleErrorsHolder:
+       type: object
+       properties:
+         errors:
+           type: array
+           items:
+             type: object
+             properties:
+               code:
+                 type: string
+                 nullable: true
+                 description: Error code.
+                 example: "INVALID_VALUE"
+               message:
+                 type: string
+                 nullable: true
+                 description: Error message.
+                 example: "The provided value is invalid."
+               details:
+                 type: string
+                 nullable: true
+                 description: Additional error details.
+                 example: "The field 'email' must contain a valid email address."
+               path:
+                 type: string
+                 nullable: true
+                 description: The API path related to the error.
+                 example: "/open/login"
+               userMessage:
+                 type: string
+                 nullable: true
+                 description: A user-friendly error message.
+                 example: "Please provide a valid email address."
+
+  parameters:
+    Email:
+      name: email
+      in: query
+      required: true
+      schema:
+        type: string
+        example: "user@email.com"
+      description: Email of the user.
+    Code:
+      name: code
+      in: query
+      required: true
+      schema:
+        type: string
+        example: "G87FA1"
+      description: Password recovery code.
+    UserId:
+      name: userId
+      in: query
+      required: true
+      schema:
+        type: string
+        example: "0ddfc155-ad49-47af-a787-af03b0be9a12"
+      description: The ID of the user.
